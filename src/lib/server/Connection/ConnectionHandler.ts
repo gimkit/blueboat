@@ -1,23 +1,29 @@
 import nanoid from 'nanoid'
+import nrp from 'node-redis-pubsub'
+import serializeError from 'serialize-error'
 import Socket from 'socket.io'
-import AvaiableRoomType from '../../../types/AvailableRoomType';
+import AvaiableRoomType from '../../../types/AvailableRoomType'
+import SimpleClient from '../../../types/SimpleClient'
+import ClientActions from '../../constants/ClientActions'
 // import ClientActions from '../../constants/ClientActions'
+import ServerActions from '../../constants/ServerActions'
+import ServerPrivateActions from '../../constants/ServerPrivateActions'
 import RedisClient from '../RedisClient'
-import RoomFetcher from '../RoomFetcher';
+import RoomFetcher from '../RoomFetcher'
+import CreateNewRoom from './CreateNewRoom'
 
 interface ConnectionHandlerOptions {
-  io: Socket.Server,
+  io: Socket.Server
   socket: Socket.Socket
+  emitter: Socket.Server
+  pubsub: nrp.NodeRedisPubSub,
   redis: RedisClient
   availableRoomTypes: AvaiableRoomType[]
   roomFetcher: RoomFetcher
 }
 
-const ConnectionHandler = (
-  options: ConnectionHandlerOptions
-) => {
-
-  const {io, socket, redis} = options
+const ConnectionHandler = (options: ConnectionHandlerOptions) => {
+  const { io, socket, redis, pubsub, availableRoomTypes, emitter } = options
 
   if (1 + 1 === 3) {
     console.log(io.sockets)
@@ -25,9 +31,66 @@ const ConnectionHandler = (
   }
 
   const userId = socket.handshake.query.id || nanoid()
+  const client: SimpleClient = { id: userId, sessionId: socket.id }
+  console.log(`${userId} joined!`)
+  socket.emit(ServerActions.clientIdSet, userId)
 
-  console.log('userid', userId)
+  socket.on(
+    ServerPrivateActions.send,
+    (message: { roomId: string; key: string; data?: any }) => {
+      if (!message || !message.key || !message.roomId) {
+        return
+      }
+      if (message.key === ServerPrivateActions.forceDisconnect) {
+        socket.disconnect(true)
+      }
+    }
+  )
 
+  socket.on(
+    ClientActions.createNewRoom,
+    async (request: {
+      type: string
+      options: any
+      uniqueRequestId: string
+    }) => {
+      try {
+        if (!request || !request.type || !request.uniqueRequestId) {
+          throw new Error('Room type needed')
+        }
+        const room = await CreateNewRoom(
+          client,
+          io,
+          emitter,
+          pubsub,
+          socket,
+          redis,
+          availableRoomTypes,
+          request.type,
+          request.options
+        )
+        socket.emit(`${request.uniqueRequestId}-create`, room.roomId)
+      } catch (e) {
+        socket.emit(`${request.uniqueRequestId}-error`, serializeError(e))
+      }
+    }
+  )
+
+  socket.on(
+    ClientActions.joinRoom,
+    (payload: { roomId: string; options?: any }) => {
+      try {
+        const { roomId, options } = payload
+        if (!roomId) {
+          throw new Error('Room ID not provided')
+        }
+      } catch (e) {
+        if (payload && payload.roomId) {
+          socket.emit(`${payload.roomId}-error`, serializeError(e))
+        }
+      }
+    }
+  )
 }
 
 export default ConnectionHandler

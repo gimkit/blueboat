@@ -1,19 +1,25 @@
 import { Server } from 'socket.io'
+import ServerPrivateActions from '../constants/ServerPrivateActions';
 import SendMessageToClient from '../utils/SendMessageToClient'
 
 class Client {
   public id: string
   public sessionId: string
-  public send: (key: string, message: any) => void
+  public send: (key: string, data?: any) => void
   public disconnect: () => void
 
-  constructor(id: string, sessionId: string, io: Server) {
+  constructor(roomId: string, id: string, sessionId: string, emitter: Server) {
     this.id = id
     this.sessionId = sessionId
-    this.send = (key: string, data: any) =>
-      SendMessageToClient(io, sessionId, key, data)
+    this.send = (key: string, data?: any) =>
+      SendMessageToClient(emitter, roomId, sessionId, key, data)
     this.disconnect = () =>
-      SendMessageToClient(io, sessionId, EnginePrivateActions.forceDisconnect)
+      SendMessageToClient(
+        emitter,
+        roomId,
+        sessionId,
+        ServerPrivateActions.forceDisconnect
+      )
   }
 }
 

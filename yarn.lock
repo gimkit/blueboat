@@ -416,6 +416,13 @@
   dependencies:
     arrify "^1.0.1"
 
+"@gamestdio/timer@^1.2.0":
+  version "1.2.0"
+  resolved "https://registry.yarnpkg.com/@gamestdio/timer/-/timer-1.2.0.tgz#b084bed7ad47833b5a77c2bf1847ebeb1b48ecde"
+  integrity sha512-YkqtnY+9tcuWDczq4o6Pe5T49/1xO1Ff/ZMZKhbF6V5JTQkBv0nnMmmw8BPVhtPjeRFk5XRD8sGUmS5BsDuhCw==
+  dependencies:
+    clock.js "^1.1.5"
+
 "@sindresorhus/df@^1.0.1":
   version "1.0.1"
   resolved "https://registry.yarnpkg.com/@sindresorhus/df/-/df-1.0.1.tgz#c69b66f52f6fcdd287c807df210305dbaf78500d"
@@ -518,6 +525,13 @@
   dependencies:
     "@types/node" "*"
 
+"@types/node-redis-pubsub@^3.0.0":
+  version "3.0.0"
+  resolved "https://registry.yarnpkg.com/@types/node-redis-pubsub/-/node-redis-pubsub-3.0.0.tgz#c809c060c3cdbce208a084dfaa6d31d64ec8934e"
+  integrity sha512-ZZKhK3UT91tvneUSxGYxYXkyQzbxNBvesq/fMsMLpBT1dwPd3DxKtXpT5hHzXOmN7X3GH3tflfr8EFkwICQ8hw==
+  dependencies:
+    "@types/redis" "*"
+
 "@types/node@*":
   version "10.12.24"
   resolved "https://registry.yarnpkg.com/@types/node/-/node-10.12.24.tgz#b13564af612a22a20b5d95ca40f1bffb3af315cf"
@@ -528,7 +542,7 @@
   resolved "https://registry.yarnpkg.com/@types/range-parser/-/range-parser-1.2.3.tgz#7ee330ba7caafb98090bece86a5ee44115904c2c"
   integrity sha512-ewFXqrQHlFsgc09MK5jP5iR7vumV/BYayNC6PgJO2LPe8vrnNFyjQjSppfEngITi0qvfKtzFvgKymGheFM9UOA==
 
-"@types/redis@^2.8.10":
+"@types/redis@*", "@types/redis@^2.8.10":
   version "2.8.10"
   resolved "https://registry.yarnpkg.com/@types/redis/-/redis-2.8.10.tgz#27130c3bcc803265a51cb978538ca330dff2e748"
   integrity sha512-X0NeV3ivoif2SPsmuPhwTkKfcr1fDJlaJIOyxZ9/TCIEbvzMzmZlstqCZ5r7AOolbOJtAfvuGArNXMexYYH3ng==
@@ -1271,6 +1285,11 @@ cliui@^4.0.0:
     string-width "^2.1.1"
     strip-ansi "^4.0.0"
     wrap-ansi "^2.0.0"
+
+clock.js@^1.1.5:
+  version "1.1.7"
+  resolved "https://registry.yarnpkg.com/clock.js/-/clock.js-1.1.7.tgz#4ae35f7c3702bf4191c1b855c8b8e273a432fb2d"
+  integrity sha1-SuNffDcCv0GRwbhVyLjic6Qy+y0=
 
 clone@^1.0.2:
   version "1.0.4"
@@ -3948,6 +3967,13 @@ node-pre-gyp@^0.10.0:
     semver "^5.3.0"
     tar "^4"
 
+node-redis-pubsub@^4.0.0:
+  version "4.0.0"
+  resolved "https://registry.yarnpkg.com/node-redis-pubsub/-/node-redis-pubsub-4.0.0.tgz#1d067ed22ce01cdc5e8cde3aaa826c46b65c9968"
+  integrity sha512-sAUOzisio/8UYCRbjPo6+u7aTpBmxSBjTJYwu49x9KruIQgi//wbEnvbqGSH5JWViP7HyQSMtkHUcZXH7qGsOQ==
+  dependencies:
+    redis "^2.7.1"
+
 node-status-codes@^1.0.0:
   version "1.0.0"
   resolved "https://registry.yarnpkg.com/node-status-codes/-/node-status-codes-1.0.0.tgz#5ae5541d024645d32a58fcddc9ceecea7ae3ac2f"
@@ -4761,7 +4787,7 @@ redis@2.6.3:
     redis-commands "^1.2.0"
     redis-parser "^2.0.0"
 
-redis@^2.8.0, redis@~2.8.0:
+redis@^2.7.1, redis@^2.8.0, redis@~2.8.0:
   version "2.8.0"
   resolved "https://registry.yarnpkg.com/redis/-/redis-2.8.0.tgz#202288e3f58c49f6079d97af7a10e1303ae14b02"
   integrity sha512-M1OkonEQwtRmZv4tEWF2VgpG0JWJ8Fv1PhlgT5+B+uNq2cA3Rt1Yt/ryoR+vQNOQcIEgdCdfH0jr3bDpihAw1A==
@@ -5017,6 +5043,11 @@ serialize-error@^2.1.0:
   version "2.1.0"
   resolved "https://registry.yarnpkg.com/serialize-error/-/serialize-error-2.1.0.tgz#50b679d5635cdf84667bdc8e59af4e5b81d5f60a"
   integrity sha1-ULZ51WNc34Rme9yOWa9OW4HV9go=
+
+serialize-error@^3.0.0:
+  version "3.0.0"
+  resolved "https://registry.yarnpkg.com/serialize-error/-/serialize-error-3.0.0.tgz#80100282b09be33c611536f50033481cb9cc87cf"
+  integrity sha512-+y3nkkG/go1Vdw+2f/+XUXM1DXX1XcxTl99FfiD/OEPUNw4uo0i6FKABfTAN5ZcgGtjTRZcEbxcE/jtXbEY19A==
 
 serve-static@1.13.2:
   version "1.13.2"

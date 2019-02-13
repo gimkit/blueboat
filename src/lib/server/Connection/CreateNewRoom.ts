@@ -1,4 +1,5 @@
 import nanoid from 'nanoid'
+import nrp from 'node-redis-pubsub'
 import { Server, Socket } from 'socket.io'
 import AvaiableRoomType from '../../../types/AvailableRoomType'
 import { RoomSnapshot } from '../../../types/RoomSnapshot'
@@ -10,6 +11,8 @@ import RedisClient from '../RedisClient'
 const CreateNewRoom = async (
   client: SimpleClient,
   io: Server,
+  emitter: Server,
+  pubsub: nrp.NodeRedisPubSub,
   socket: Socket,
   redis: RedisClient,
   availableRooms: AvaiableRoomType[],
@@ -24,6 +27,8 @@ const CreateNewRoom = async (
     const roomId = nanoid()
     const room = new Room({
       io,
+      emitter,
+      pubsub,
       owner: client,
       roomId,
       redis,
@@ -31,8 +36,8 @@ const CreateNewRoom = async (
       ownerSocket: socket
     })
     const listOfRooms = JSON.parse(
-      await redis.get(LIST_OF_ROOM_IDS)
-    ) as string[]
+      await redis.get(LIST_OF_ROOM_IDS, true)
+    ) || [] as string[]
     await redis.set(LIST_OF_ROOM_IDS, JSON.stringify([...listOfRooms, roomId]))
     const snapshot: RoomSnapshot = {
       id: roomId,
