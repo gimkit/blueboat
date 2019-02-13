@@ -6,7 +6,6 @@ import MessagePackParser from 'socket.io-msgpack-parser'
 import redisAdapter from 'socket.io-redis'
 import AvaiableRoomType from '../../types/AvailableRoomType'
 import ConnectionHandler from './Connection/ConnectionHandler'
-import Emitter from './Emitter';
 import RedisClient from './RedisClient'
 import RoomFetcher from './RoomFetcher'
 
@@ -34,7 +33,6 @@ class Server {
   public listen: (port: number, callback: () => void) => void = null
   private app: Express.Application = null
   private io: SocketIO.Server = null
-  private emitter: SocketIO.Server
   private pubsub: nrp.NodeRedisPubSub
   private roomFetcher: RoomFetcher = null
 
@@ -43,7 +41,6 @@ class Server {
     this.redis = new RedisClient({
       clientOptions: options.redisOptions as any
     })
-    this.emitter = Emitter(this.redis)
     this.pubsub = nrp(options.redisOptions)
     this.roomFetcher = new RoomFetcher({ redis: this.redis })
     this.spawnServer(options.redisOptions)
@@ -73,7 +70,6 @@ class Server {
       ConnectionHandler({
         availableRoomTypes: this.state.availableRoomTypes,
         io: this.io,
-        emitter: this.emitter,
         pubsub: this.pubsub,
         redis: this.redis,
         roomFetcher: this.roomFetcher,

@@ -7,11 +7,12 @@ import SimpleClient from '../../../types/SimpleClient'
 import { LIST_OF_ROOM_IDS, ROOM_PREFIX } from '../../constants/RedisKeys'
 import Room from '../../room/Room'
 import RedisClient from '../RedisClient'
+import RoomFetcher from '../RoomFetcher';
 
 const CreateNewRoom = async (
   client: SimpleClient,
   io: Server,
-  emitter: Server,
+  roomFetcher: RoomFetcher,
   pubsub: nrp.NodeRedisPubSub,
   socket: Socket,
   redis: RedisClient,
@@ -27,7 +28,6 @@ const CreateNewRoom = async (
     const roomId = nanoid()
     const room = new Room({
       io,
-      emitter,
       pubsub,
       owner: client,
       roomId,
@@ -35,9 +35,7 @@ const CreateNewRoom = async (
       options: { ...(roomToCreate.options || {}), ...roomOptions },
       ownerSocket: socket
     })
-    const listOfRooms = JSON.parse(
-      await redis.get(LIST_OF_ROOM_IDS, true)
-    ) || [] as string[]
+    const listOfRooms = await roomFetcher.getListOfRooms()
     await redis.set(LIST_OF_ROOM_IDS, JSON.stringify([...listOfRooms, roomId]))
     const snapshot: RoomSnapshot = {
       id: roomId,

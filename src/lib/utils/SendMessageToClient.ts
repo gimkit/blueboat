@@ -1,10 +1,10 @@
 import { Server } from 'socket.io'
 
 const SendMessageToClient = (
-  emitter: Server,
+  io: Server,
   roomId: string,
   to: string,
   key: string,
   data?: any
-) => emitter.to(to).emit(`MESSAGE-${roomId}`, { key, data })
+) => io.to(to).emit(`message-${roomId}`, { key, data })
 export default SendMessageToClient

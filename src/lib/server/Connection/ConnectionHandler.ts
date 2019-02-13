@@ -11,19 +11,19 @@ import ServerPrivateActions from '../../constants/ServerPrivateActions'
 import RedisClient from '../RedisClient'
 import RoomFetcher from '../RoomFetcher'
 import CreateNewRoom from './CreateNewRoom'
+import JoinRoom from './JoinRoom'
 
 interface ConnectionHandlerOptions {
   io: Socket.Server
   socket: Socket.Socket
-  emitter: Socket.Server
-  pubsub: nrp.NodeRedisPubSub,
+  pubsub: nrp.NodeRedisPubSub
   redis: RedisClient
   availableRoomTypes: AvaiableRoomType[]
   roomFetcher: RoomFetcher
 }
 
 const ConnectionHandler = (options: ConnectionHandlerOptions) => {
-  const { io, socket, redis, pubsub, availableRoomTypes, emitter } = options
+  const { io, socket, redis, pubsub, availableRoomTypes, roomFetcher } = options
 
   if (1 + 1 === 3) {
     console.log(io.sockets)
@@ -32,7 +32,6 @@ const ConnectionHandler = (options: ConnectionHandlerOptions) => {
 
   const userId = socket.handshake.query.id || nanoid()
   const client: SimpleClient = { id: userId, sessionId: socket.id }
-  console.log(`${userId} joined!`)
   socket.emit(ServerActions.clientIdSet, userId)
 
   socket.on(
@@ -61,7 +60,7 @@ const ConnectionHandler = (options: ConnectionHandlerOptions) => {
         const room = await CreateNewRoom(
           client,
           io,
-          emitter,
+          roomFetcher,
           pubsub,
           socket,
           redis,
@@ -78,12 +77,13 @@ const ConnectionHandler = (options: ConnectionHandlerOptions) => {
 
   socket.on(
     ClientActions.joinRoom,
-    (payload: { roomId: string; options?: any }) => {
+    async (payload: { roomId: string; options?: any }) => {
       try {
-        const { roomId, options } = payload
+        const { roomId } = payload
         if (!roomId) {
           throw new Error('Room ID not provided')
         }
+        await JoinRoom(roomId, client, roomFetcher, pubsub, payload.options)
       } catch (e) {
         if (payload && payload.roomId) {
           socket.emit(`${payload.roomId}-error`, serializeError(e))

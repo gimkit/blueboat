@@ -8,14 +8,16 @@ class Client {
   public send: (key: string, data?: any) => void
   public disconnect: () => void
 
-  constructor(roomId: string, id: string, sessionId: string, emitter: Server) {
+  constructor(roomId: string, id: string, sessionId: string, io: Server) {
     this.id = id
     this.sessionId = sessionId
-    this.send = (key: string, data?: any) =>
-      SendMessageToClient(emitter, roomId, sessionId, key, data)
+    this.send = (key: string, data?: any) => {
+      SendMessageToClient(io, roomId, sessionId, key, data)
+    }
+
     this.disconnect = () =>
       SendMessageToClient(
-        emitter,
+        io,
         roomId,
         sessionId,
         ServerPrivateActions.forceDisconnect

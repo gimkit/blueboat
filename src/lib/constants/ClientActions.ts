@@ -3,8 +3,8 @@
  */
 
 const ClientActions = {
-  createNewRoom: 'CREATE_NEW_ROOM',
-  joinRoom: 'JOIN_ROOM'
+  createNewRoom: 'blueboat_CREATE_NEW_ROOM',
+  joinRoom: 'blueboat_JOIN_ROOM'
 }
 
 export default ClientActions
