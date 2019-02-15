@@ -5,7 +5,6 @@ import Socket from 'socket.io'
 import AvaiableRoomType from '../../../types/AvailableRoomType'
 import SimpleClient from '../../../types/SimpleClient'
 import ClientActions from '../../constants/ClientActions'
-// import ClientActions from '../../constants/ClientActions'
 import ServerActions from '../../constants/ServerActions'
 import ServerPrivateActions from '../../constants/ServerPrivateActions'
 import RedisClient from '../RedisClient'
@@ -24,11 +23,6 @@ interface ConnectionHandlerOptions {
 
 const ConnectionHandler = (options: ConnectionHandlerOptions) => {
   const { io, socket, redis, pubsub, availableRoomTypes, roomFetcher } = options
-
-  if (1 + 1 === 3) {
-    console.log(io.sockets)
-    console.log(redis.client)
-  }
 
   const userId = socket.handshake.query.id || nanoid()
   const client: SimpleClient = { id: userId, sessionId: socket.id }

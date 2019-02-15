@@ -1,6 +1,7 @@
 import cors from 'cors'
 import Express from 'express'
 import Server from '../lib/server/Server'
+import TestRoom from './TestRoom';
 
 const app = Express()
 app.use(cors())
@@ -10,6 +11,6 @@ const server = new Server({app, redisOptions: {
   port: 6379,
 }})
 
-server.registerRoom('Test', () => false)
+server.registerRoom('Test', TestRoom)
 
 server.listen(4000, () => console.log("Server listening on port 4000"))

@@ -5,7 +5,6 @@ import AvaiableRoomType from '../../../types/AvailableRoomType'
 import { RoomSnapshot } from '../../../types/RoomSnapshot'
 import SimpleClient from '../../../types/SimpleClient'
 import { LIST_OF_ROOM_IDS, ROOM_PREFIX } from '../../constants/RedisKeys'
-import Room from '../../room/Room'
 import RedisClient from '../RedisClient'
 import RoomFetcher from '../RoomFetcher';
 
@@ -26,7 +25,7 @@ const CreateNewRoom = async (
       throw new Error(`${roomName} does not have a room handler`)
     }
     const roomId = nanoid()
-    const room = new Room({
+    const room = new roomToCreate.handler({
       io,
       pubsub,
       owner: client,

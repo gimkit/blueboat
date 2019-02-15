@@ -1,5 +1,7 @@
 import Redis from 'redis'
 
+const threeHours = 60 * 60 * 3
+
 interface RedisClientOptions {
   clientOptions?: Redis.ClientOpts
   customPrefix?: string
@@ -19,17 +21,23 @@ class RedisClient {
 
   public set(key: string, value: string) {
     return new Promise((resolve, reject) => {
-      this.client.set(this.getKey(key), value, (err, response) => {
-        if (err) {
-          reject(
-            new Error(
-              this.getKey(key) + ' - failed to set value - ' + err.message
+      this.client.set(
+        this.getKey(key),
+        value,
+        'EX',
+        threeHours,
+        (err, response) => {
+          if (err) {
+            reject(
+              new Error(
+                this.getKey(key) + ' - failed to set value - ' + err.message
+              )
             )
-          )
-        } else {
-          resolve(response)
+          } else {
+            resolve(response)
+          }
         }
-      })
+      )
     })
   }
 
