@@ -77,6 +77,18 @@ class RoomFetcher {
     }
   }
 
+  public setRoomMetadata = async (roomId: string, newMetadata: any) => {
+    try {
+      const room = await this.findRoomById(roomId)
+      await this.redis.set(
+        ROOM_PREFIX + room.id,
+        JSON.stringify({ ...room, metadata: newMetadata })
+      )
+    } catch (e) {
+      throw e
+    }
+  }
+
   public addRoom = async (room: RoomSnapshot) => {
     try {
       const rooms = await this.getListOfRooms()

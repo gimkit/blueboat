@@ -5,7 +5,7 @@ import Socket from 'socket.io'
 import AvaiableRoomType from '../../../types/AvailableRoomType'
 import SimpleClient from '../../../types/SimpleClient'
 import ClientActions from '../../constants/ClientActions'
-import { PLAYER_LEFT } from '../../constants/PubSubListeners';
+import { PLAYER_LEFT } from '../../constants/PubSubListeners'
 import ServerActions from '../../constants/ServerActions'
 import ServerPrivateActions from '../../constants/ServerPrivateActions'
 import Room from '../../room/Room'
@@ -70,8 +70,7 @@ const ConnectionHandler = (options: ConnectionHandlerOptions) => {
           redis,
           availableRoomTypes,
           onRoomDisposed,
-          request.type,
-          request.options
+          request.type
         )
         onRoomMade(room)
         socket.emit(`${request.uniqueRequestId}-create`, room.roomId)
@@ -95,6 +94,23 @@ const ConnectionHandler = (options: ConnectionHandlerOptions) => {
           socket.emit(`${payload.roomId}-error`, serializeError(e))
         }
       }
+    }
+  )
+
+  socket.on(
+    ClientActions.sendMessage,
+    (message: { room: string; message?: any }) => {
+      if (message.message === undefined || !message.room) {
+        return
+      }
+      pubsub.emit(
+        message.room,
+        JSON.stringify({
+          client,
+          action: ClientActions.sendMessage,
+          data: message.message
+        })
+      )
     }
   )
 

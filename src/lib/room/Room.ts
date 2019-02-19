@@ -34,12 +34,15 @@ class Room<State = any> {
   public patchRate = ROOM_STATE_PATCH_RATE
   public options = {}
   public clock = new ClockManager()
+  public metadata: any
 
   // Private room Helpers and Objects
   private io: Server
 
   private pubsub: NodeRedisPubSub
+  // @ts-ignore
   private redis: RedisClient
+  // @ts-ignore
   private ownerSocket: Socket
   private owner: SimpleClient
   private onRoomDisposed: (roomId: string) => void
@@ -63,7 +66,7 @@ class Room<State = any> {
     this.onRoomDisposed = options.onRoomDisposed
     this.roomFetcher = options.roomFetcher
     if (options.options) {
-      this.options = options
+      this.options = options.options
     }
     this.pubSubListener()
   }
@@ -72,7 +75,9 @@ class Room<State = any> {
   public onCreate?(options?: any): void
   public canClientJoin?(client: SimpleClient, options?: any): boolean
   public onJoin?(client: Client, options?: any): void
+  public onMessage?(client: Client, message: any): void
   public onLeave?(client: Client, intentional: boolean): void
+
   public onDispose?(): void
 
   public setState = (newState: State) => {
@@ -101,6 +106,13 @@ class Room<State = any> {
     )
   }
 
+  public setMetadata = (newMetadata: any) => {
+    this.roomFetcher
+      .setRoomMetadata(this.roomId, newMetadata)
+      .then(() => (this.metadata = newMetadata))
+      .catch()
+  }
+
   public dispose = async () => {
     try {
       await this.roomFetcher.removeRoom(this.roomId)
@@ -123,7 +135,7 @@ class Room<State = any> {
     if (patches.length) {
       this.broadcast(ServerActions.statePatch, patches)
     }
-    this._lastState = { ...this.state }
+    this._lastState = JSON.parse(JSON.stringify(this.state))
   }
 
   private onRoomCreated = () => {
@@ -151,16 +163,6 @@ class Room<State = any> {
       this.findFullClientFromSimpleClient(prejoinedClient),
       options
     )
-    if (1 + 1 === 3) {
-      // just so typescript doesn't complain to me for now
-      return (
-        this.clientRequestsToJoin ||
-        this.addClient ||
-        this.redis ||
-        this.owner ||
-        this.ownerSocket
-      )
-    }
   }
 
   private clientHasJoined = (client: Client, options?: any) => {
@@ -192,6 +194,9 @@ class Room<State = any> {
     if (!client) {
       return
     }
+    if (intentional) {
+      client.send(ServerActions.removedFromRoom)
+    }
     this.clients = this.clients.filter(c => c !== client)
     if (this.onLeave) {
       this.onLeave(client, intentional)
@@ -222,6 +227,17 @@ class Room<State = any> {
           this.io
             .to(client.sessionId)
             .emit(`${this.roomId}-error`, 'Not allowed to join room')
+        }
+      }
+      if (action === ClientActions.sendMessage) {
+        const roomClient = this.clients.filter(
+          c => c.sessionId === payload.client.sessionId
+        )[0]
+        if (!roomClient) {
+          return
+        }
+        if (this.onMessage) {
+          this.onMessage(roomClient, payload.data)
         }
       }
     })

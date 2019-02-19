@@ -45,7 +45,8 @@ class Server {
     this.redis = new RedisClient({
       clientOptions: options.redisOptions as any
     })
-    this.pubsub = nrp(options.redisOptions)
+    // @ts-ignore
+    this.pubsub = new nrp(options.redisOptions)
     this.roomFetcher = new RoomFetcher({ redis: this.redis })
     this.spawnServer(options.redisOptions)
   }
@@ -75,7 +76,7 @@ class Server {
       path: '/blueboat'
     })
     this.io.adapter(redisAdapter(redisOptions))
-    this.io.attach(this.server, { cookie: true })
+    this.io.attach(this.server)
     this.io.on('connection', s =>
       ConnectionHandler({
         availableRoomTypes: this.state.availableRoomTypes,
@@ -90,11 +91,16 @@ class Server {
     )
 
     signals.forEach(signal =>
-      process.once(signal as any, () => this.shutdown(signal))
+      process.once(signal as any, (reason?: any) =>
+        this.shutdown(signal, reason)
+      )
     )
   }
 
-  private shutdown = async (signal: string) => {
+  private shutdown = async (signal: string, reason?: any) => {
+    if (signal === 'uncaughtException' && reason) {
+      console.log(reason)
+    }
     try {
       if (!this.state.managingRooms.length) {
         return
@@ -104,9 +110,7 @@ class Server {
       return
     } finally {
       this.server.close()
-      if (signal === 'uncaughtException') {
-        process.exit(1)
-      }
+      process.exit(0)
     }
   }
 }
