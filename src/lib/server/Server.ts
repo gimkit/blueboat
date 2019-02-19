@@ -5,6 +5,7 @@ import socket from 'socket.io'
 import MessagePackParser from 'socket.io-msgpack-parser'
 import redisAdapter from 'socket.io-redis'
 import AvaiableRoomType from '../../types/AvailableRoomType'
+import Room from '../room/Room'
 import ConnectionHandler from './Connection/ConnectionHandler'
 import RedisClient from './RedisClient'
 import RoomFetcher from './RoomFetcher'
@@ -23,13 +24,16 @@ interface ServerArguments {
 
 interface ServerState {
   availableRoomTypes: AvaiableRoomType[]
+  managingRooms: Room[]
 }
+
+const signals = ['SIGINT', 'SIGTERM', 'SIGUSR2', 'uncaughtException']
 
 class Server {
   public server: HTTPServer = null
   public redis: RedisClient = null
 
-  public state: ServerState = { availableRoomTypes: [] }
+  public state: ServerState = { availableRoomTypes: [], managingRooms: [] }
   public listen: (port: number, callback: () => void) => void = null
   private app: Express.Application = null
   private io: SocketIO.Server = null
@@ -56,6 +60,12 @@ class Server {
     return
   }
 
+  private onRoomMade = (room: Room) => this.state.managingRooms.push(room)
+  private onRoomDisposed = (roomId: string) =>
+    (this.state.managingRooms = this.state.managingRooms.filter(
+      room => room.roomId !== roomId
+    ))
+
   private spawnServer = (redisOptions: RedisOptions) => {
     this.server = new HTTPServer(this.app)
     this.listen = (port: number, callback: () => void) =>
@@ -73,9 +83,31 @@ class Server {
         pubsub: this.pubsub,
         redis: this.redis,
         roomFetcher: this.roomFetcher,
-        socket: s
+        socket: s,
+        onRoomMade: this.onRoomMade,
+        onRoomDisposed: this.onRoomDisposed
       })
     )
+
+    signals.forEach(signal =>
+      process.once(signal as any, () => this.shutdown(signal))
+    )
+  }
+
+  private shutdown = async (signal: string) => {
+    try {
+      if (!this.state.managingRooms.length) {
+        return
+      }
+      await Promise.all(this.state.managingRooms.map(room => room.dispose()))
+    } catch (e) {
+      return
+    } finally {
+      this.server.close()
+      if (signal === 'uncaughtException') {
+        process.exit(1)
+      }
+    }
   }
 }
 

@@ -4,7 +4,7 @@ import { Server, Socket } from 'socket.io'
 import AvaiableRoomType from '../../../types/AvailableRoomType'
 import { RoomSnapshot } from '../../../types/RoomSnapshot'
 import SimpleClient from '../../../types/SimpleClient'
-import { LIST_OF_ROOM_IDS, ROOM_PREFIX } from '../../constants/RedisKeys'
+import Room from '../../room/Room';
 import RedisClient from '../RedisClient'
 import RoomFetcher from '../RoomFetcher';
 
@@ -16,6 +16,7 @@ const CreateNewRoom = async (
   socket: Socket,
   redis: RedisClient,
   availableRooms: AvaiableRoomType[],
+  onRoomDisposed: (roomId: string) => void,
   roomName: string,
   roomOptions = {}
 ) => {
@@ -32,18 +33,18 @@ const CreateNewRoom = async (
       roomId,
       redis,
       options: { ...(roomToCreate.options || {}), ...roomOptions },
-      ownerSocket: socket
+      ownerSocket: socket,
+      roomFetcher,
+      onRoomDisposed,
     })
-    const listOfRooms = await roomFetcher.getListOfRooms()
-    await redis.set(LIST_OF_ROOM_IDS, JSON.stringify([...listOfRooms, roomId]))
     const snapshot: RoomSnapshot = {
       id: roomId,
       type: roomName,
       owner: client,
       metadata: {}
     }
-    await redis.set(ROOM_PREFIX + roomId, JSON.stringify(snapshot))
-    return room
+    await roomFetcher.addRoom(snapshot)
+    return room as Room
   } catch (e) {
     throw e
   }

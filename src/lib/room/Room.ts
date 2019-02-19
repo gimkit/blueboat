@@ -6,6 +6,7 @@ import ClientActions from '../constants/ClientActions'
 import { ROOM_STATE_PATCH_RATE } from '../constants/RoomConfig'
 import ServerActions from '../constants/ServerActions'
 import RedisClient from '../server/RedisClient'
+import RoomFetcher from '../server/RoomFetcher'
 import Client from './Client'
 import Clock from './Clock'
 import ClockManager from './ClockManager'
@@ -18,6 +19,8 @@ interface RoomOptions {
   owner: SimpleClient
   ownerSocket: Socket
   options: {}
+  onRoomDisposed: (roomId: string) => void
+  roomFetcher: RoomFetcher
 }
 
 class Room<State = any> {
@@ -38,6 +41,8 @@ class Room<State = any> {
   private redis: RedisClient
   private ownerSocket: Socket
   private owner: SimpleClient
+  private onRoomDisposed: (roomId: string) => void
+  private roomFetcher: RoomFetcher
 
   /* tslint:disable */
   private _patchInterval: Clock
@@ -52,6 +57,8 @@ class Room<State = any> {
     this.redis = options.redis
     this.owner = options.owner
     this.ownerSocket = options.ownerSocket
+    this.onRoomDisposed = options.onRoomDisposed
+    this.roomFetcher = options.roomFetcher
     if (options.options) {
       this.options = options
     }
@@ -62,6 +69,7 @@ class Room<State = any> {
   public onCreate?(options?: any): void
   public canClientJoin?(client: SimpleClient, options?: any): boolean
   public onJoin?(client: Client, options?: any): void
+  public onDispose?(): void
 
   public setState = (newState: State) => {
     this._lastState = newState
@@ -87,6 +95,18 @@ class Room<State = any> {
       this._sendNewPatch,
       patchRateInMilliseconds
     )
+  }
+
+  public dispose = async () => {
+    try {
+      await this.roomFetcher.removeRoom(this.roomId)
+      this.onRoomDisposed(this.roomId)
+      if (this.onDispose) {
+        await this.onDispose()
+      }
+    } catch (e) {
+      throw e
+    }
   }
 
   // tslint:disable-next-line
@@ -183,13 +203,6 @@ class Room<State = any> {
       }
     })
   }
-
-  // private cleanupAndDisposeRoom() {
-  //   if (this._patchInterval) {
-  //     clearInterval(this._patchInterval)
-  //     this._patchInterval = undefined
-  //   }
-  // }
 }
 
 export default Room

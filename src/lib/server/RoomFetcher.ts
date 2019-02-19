@@ -6,6 +6,15 @@ interface RoomFetcherOptions {
   redis: RedisClient
 }
 
+interface RoomItem {
+  id: string
+  createdAt: number
+}
+
+const MAX_SECONDS_LENGTH_OF_ROOM = Number(
+  process.env.BLUEBOAT_MAX_ROOM_LENGTH || 10800
+)
+
 /**
  * Can help find a list of currently available Rooms and their snapshots
  */
@@ -18,8 +27,19 @@ class RoomFetcher {
 
   public getListOfRooms = async () => {
     try {
-      const rooms = await this.redis.get(LIST_OF_ROOM_IDS, true)
-      return rooms ? (JSON.parse(rooms) as string[]) : []
+      const fetchedRooms = await this.redis.get(LIST_OF_ROOM_IDS, true)
+      const rooms: RoomItem[] =
+        fetchedRooms &&
+        JSON.parse(fetchedRooms) &&
+        JSON.parse(fetchedRooms).forEach
+          ? JSON.parse(fetchedRooms)
+          : []
+      rooms.forEach(async room => {
+        if (room.createdAt + MAX_SECONDS_LENGTH_OF_ROOM < Date.now()) {
+          await this.removeRoom(room.id)
+        }
+      })
+      return rooms
     } catch (e) {
       throw e
     }
@@ -29,9 +49,9 @@ class RoomFetcher {
     try {
       const roomList = await this.getListOfRooms()
       const rooms = await Promise.all(
-        roomList.map(async (roomId: string) => {
+        roomList.map(async (r: RoomItem) => {
           try {
-            const room = await this.redis.get(ROOM_PREFIX + roomId)
+            const room = await this.redis.get(ROOM_PREFIX + r.id)
             return JSON.parse(room) as RoomSnapshot
           } catch (e) {
             throw e
@@ -52,6 +72,28 @@ class RoomFetcher {
         throw new Error(`No room found with id ${roomId}`)
       }
       return room
+    } catch (e) {
+      throw e
+    }
+  }
+
+  public addRoom = async (room: RoomSnapshot) => {
+    try {
+      const rooms = await this.getListOfRooms()
+      const newRooms = [...rooms, { id: room.id, createdAt: Date.now() }]
+      await this.redis.set(ROOM_PREFIX + room.id, JSON.stringify(room))
+      await this.redis.set(LIST_OF_ROOM_IDS, JSON.stringify(newRooms))
+    } catch (e) {
+      throw e
+    }
+  }
+
+  public removeRoom = async (roomId: string) => {
+    try {
+      const rooms = await this.getListOfRooms()
+      const newRooms = rooms.filter(room => room.id !== roomId)
+      await this.redis.set(LIST_OF_ROOM_IDS, JSON.stringify(newRooms))
+      await this.redis.set(ROOM_PREFIX + roomId, '')
     } catch (e) {
       throw e
     }

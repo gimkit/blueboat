@@ -7,6 +7,7 @@ import SimpleClient from '../../../types/SimpleClient'
 import ClientActions from '../../constants/ClientActions'
 import ServerActions from '../../constants/ServerActions'
 import ServerPrivateActions from '../../constants/ServerPrivateActions'
+import Room from '../../room/Room';
 import RedisClient from '../RedisClient'
 import RoomFetcher from '../RoomFetcher'
 import CreateNewRoom from './CreateNewRoom'
@@ -19,10 +20,12 @@ interface ConnectionHandlerOptions {
   redis: RedisClient
   availableRoomTypes: AvaiableRoomType[]
   roomFetcher: RoomFetcher
+  onRoomMade: (room: Room) => void
+  onRoomDisposed:  (roomId: string) => void
 }
 
 const ConnectionHandler = (options: ConnectionHandlerOptions) => {
-  const { io, socket, redis, pubsub, availableRoomTypes, roomFetcher } = options
+  const { io, socket, redis, pubsub, availableRoomTypes, roomFetcher, onRoomMade, onRoomDisposed } = options
 
   const userId = socket.handshake.query.id || nanoid()
   const client: SimpleClient = { id: userId, sessionId: socket.id }
@@ -59,9 +62,11 @@ const ConnectionHandler = (options: ConnectionHandlerOptions) => {
           socket,
           redis,
           availableRoomTypes,
+          onRoomDisposed,
           request.type,
           request.options
         )
+        onRoomMade(room)
         socket.emit(`${request.uniqueRequestId}-create`, room.roomId)
       } catch (e) {
         socket.emit(`${request.uniqueRequestId}-error`, serializeError(e))
