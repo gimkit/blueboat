@@ -3,6 +3,7 @@ import { NodeRedisPubSub } from 'node-redis-pubsub'
 import { Server, Socket } from 'socket.io'
 import SimpleClient from '../../types/SimpleClient'
 import ClientActions from '../constants/ClientActions'
+import { PLAYER_LEFT } from '../constants/PubSubListeners'
 import { ROOM_STATE_PATCH_RATE } from '../constants/RoomConfig'
 import ServerActions from '../constants/ServerActions'
 import RedisClient from '../server/RedisClient'
@@ -46,6 +47,8 @@ class Room<State = any> {
 
   /* tslint:disable */
   private _patchInterval: Clock
+  private _gameMessagePubsub: any
+  private _playerPubsub: any
   // @ts-ignore
   private _lastState: State = {}
   /* tslint:enable */
@@ -69,6 +72,7 @@ class Room<State = any> {
   public onCreate?(options?: any): void
   public canClientJoin?(client: SimpleClient, options?: any): boolean
   public onJoin?(client: Client, options?: any): void
+  public onLeave?(client: Client, intentional: boolean): void
   public onDispose?(): void
 
   public setState = (newState: State) => {
@@ -101,6 +105,8 @@ class Room<State = any> {
     try {
       await this.roomFetcher.removeRoom(this.roomId)
       this.onRoomDisposed(this.roomId)
+      this._gameMessagePubsub()
+      this._playerPubsub()
       if (this.onDispose) {
         await this.onDispose()
       }
@@ -137,7 +143,8 @@ class Room<State = any> {
         this.roomId,
         prejoinedClient.id,
         prejoinedClient.sessionId,
-        this.io
+        this.io,
+        this.removeClient
       )
     )
     this.clientHasJoined(
@@ -180,8 +187,24 @@ class Room<State = any> {
     return true
   }
 
+  private removeClient = (clientSessionId: string, intentional: boolean) => {
+    const client = this.clients.filter(c => c.sessionId === clientSessionId)[0]
+    if (!client) {
+      return
+    }
+    this.clients = this.clients.filter(c => c !== client)
+    if (this.onLeave) {
+      this.onLeave(client, intentional)
+    }
+    if (client.sessionId === this.owner.sessionId) {
+      this.dispose()
+        .then()
+        .catch()
+    }
+  }
+
   private pubSubListener = () => {
-    this.pubsub.on(this.roomId, (d: string) => {
+    this._gameMessagePubsub = this.pubsub.on(this.roomId, (d: string) => {
       const payload = JSON.parse(d) as {
         action: string
         client: SimpleClient
@@ -202,6 +225,18 @@ class Room<State = any> {
         }
       }
     })
+    this._playerPubsub = this.pubsub.on(
+      PLAYER_LEFT,
+      (playerSessionId: string) => {
+        const client = this.clients.filter(
+          c => c.sessionId === playerSessionId
+        )[0]
+        if (!client) {
+          return
+        }
+        this.removeClient(client.sessionId, false)
+      }
+    )
   }
 }
 

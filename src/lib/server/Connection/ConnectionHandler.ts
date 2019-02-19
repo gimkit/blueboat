@@ -5,9 +5,10 @@ import Socket from 'socket.io'
 import AvaiableRoomType from '../../../types/AvailableRoomType'
 import SimpleClient from '../../../types/SimpleClient'
 import ClientActions from '../../constants/ClientActions'
+import { PLAYER_LEFT } from '../../constants/PubSubListeners';
 import ServerActions from '../../constants/ServerActions'
 import ServerPrivateActions from '../../constants/ServerPrivateActions'
-import Room from '../../room/Room';
+import Room from '../../room/Room'
 import RedisClient from '../RedisClient'
 import RoomFetcher from '../RoomFetcher'
 import CreateNewRoom from './CreateNewRoom'
@@ -21,11 +22,20 @@ interface ConnectionHandlerOptions {
   availableRoomTypes: AvaiableRoomType[]
   roomFetcher: RoomFetcher
   onRoomMade: (room: Room) => void
-  onRoomDisposed:  (roomId: string) => void
+  onRoomDisposed: (roomId: string) => void
 }
 
 const ConnectionHandler = (options: ConnectionHandlerOptions) => {
-  const { io, socket, redis, pubsub, availableRoomTypes, roomFetcher, onRoomMade, onRoomDisposed } = options
+  const {
+    io,
+    socket,
+    redis,
+    pubsub,
+    availableRoomTypes,
+    roomFetcher,
+    onRoomMade,
+    onRoomDisposed
+  } = options
 
   const userId = socket.handshake.query.id || nanoid()
   const client: SimpleClient = { id: userId, sessionId: socket.id }
@@ -36,9 +46,6 @@ const ConnectionHandler = (options: ConnectionHandlerOptions) => {
     (message: { roomId: string; key: string; data?: any }) => {
       if (!message || !message.key || !message.roomId) {
         return
-      }
-      if (message.key === ServerPrivateActions.forceDisconnect) {
-        socket.disconnect(true)
       }
     }
   )
@@ -90,6 +97,10 @@ const ConnectionHandler = (options: ConnectionHandlerOptions) => {
       }
     }
   )
+
+  socket.on('disconnect', () => {
+    pubsub.emit(PLAYER_LEFT, socket.id)
+  })
 }
 
 export default ConnectionHandler
