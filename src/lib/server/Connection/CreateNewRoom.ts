@@ -4,9 +4,9 @@ import { Server, Socket } from 'socket.io'
 import AvaiableRoomType from '../../../types/AvailableRoomType'
 import { RoomSnapshot } from '../../../types/RoomSnapshot'
 import SimpleClient from '../../../types/SimpleClient'
-import Room from '../../room/Room';
+import Room from '../../room/Room'
 import RedisClient from '../RedisClient'
-import RoomFetcher from '../RoomFetcher';
+import RoomFetcher from '../RoomFetcher'
 
 const CreateNewRoom = async (
   client: SimpleClient,
@@ -17,7 +17,7 @@ const CreateNewRoom = async (
   redis: RedisClient,
   availableRooms: AvaiableRoomType[],
   onRoomDisposed: (roomId: string) => void,
-  roomName: string,
+  roomName: string
 ) => {
   try {
     const roomToCreate = availableRooms.filter(r => r.name === roomName)[0]
@@ -34,7 +34,7 @@ const CreateNewRoom = async (
       options: roomToCreate.options,
       ownerSocket: socket,
       roomFetcher,
-      onRoomDisposed,
+      onRoomDisposed
     })
     const snapshot: RoomSnapshot = {
       id: roomId,

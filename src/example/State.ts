@@ -1,8 +1,7 @@
-// import { EntityMap } from "..";
-
 class State {
-  public name = 'ayy'
-  public players = {}
+  public messages = [
+    { message: 'Welcome to the chat!', senderId: 'TestBot' }
+  ] as Array<{ message: string; senderId: string }>
 }
 
 export default State

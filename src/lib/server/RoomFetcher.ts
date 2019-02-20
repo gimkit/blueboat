@@ -85,7 +85,7 @@ class RoomFetcher {
         JSON.stringify({ ...room, metadata: newMetadata })
       )
     } catch (e) {
-      throw e
+      return e
     }
   }
 

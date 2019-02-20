@@ -1,7 +1,7 @@
 import cors from 'cors'
 import Express from 'express'
 import { Server } from '..'
-import TestRoom from './TestRoom'
+import ChatRoom from './ChatRoom'
 
 const app = Express()
 app.use(cors())
@@ -14,6 +14,6 @@ const server = new Server({
   }
 })
 
-server.registerRoom('Test', TestRoom)
+server.registerRoom('Chat', ChatRoom)
 
 server.listen(4000, () => console.log('Server listening on port 4000'))

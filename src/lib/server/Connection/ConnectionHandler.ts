@@ -7,7 +7,6 @@ import SimpleClient from '../../../types/SimpleClient'
 import ClientActions from '../../constants/ClientActions'
 import { PLAYER_LEFT } from '../../constants/PubSubListeners'
 import ServerActions from '../../constants/ServerActions'
-import ServerPrivateActions from '../../constants/ServerPrivateActions'
 import Room from '../../room/Room'
 import RedisClient from '../RedisClient'
 import RoomFetcher from '../RoomFetcher'
@@ -41,14 +40,14 @@ const ConnectionHandler = (options: ConnectionHandlerOptions) => {
   const client: SimpleClient = { id: userId, sessionId: socket.id }
   socket.emit(ServerActions.clientIdSet, userId)
 
-  socket.on(
-    ServerPrivateActions.send,
-    (message: { roomId: string; key: string; data?: any }) => {
-      if (!message || !message.key || !message.roomId) {
-        return
-      }
+  socket.on(ClientActions.requestAvailableRooms, async () => {
+    try {
+      const rooms = await roomFetcher.getListOfRoomsWithData()
+      socket.emit(ServerActions.availableRooms, rooms)
+    } catch (e) {
+      return
     }
-  )
+  })
 
   socket.on(
     ClientActions.createNewRoom,

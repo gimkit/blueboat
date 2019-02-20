@@ -77,6 +77,8 @@ class Room<State = any> {
   public onJoin?(client: Client, options?: any): void
   public onMessage?(client: Client, message: any): void
   public onLeave?(client: Client, intentional: boolean): void
+  public beforePatch?(lastState: State): void
+  public afterPatch?(lastState: State): void
 
   public onDispose?(): void
 
@@ -129,11 +131,17 @@ class Room<State = any> {
 
   // tslint:disable-next-line
   private _sendNewPatch = () => {
+    if (this.beforePatch) {
+      this.beforePatch(this._lastState)
+    }
     const lastState = JSON.parse(JSON.stringify(this._lastState))
     const currentState = JSON.parse(JSON.stringify(this.state))
     const patches = jsonpatch.compare(lastState, currentState)
     if (patches.length) {
       this.broadcast(ServerActions.statePatch, patches)
+    }
+    if (this.afterPatch) {
+      this.afterPatch(this._lastState)
     }
     this._lastState = JSON.parse(JSON.stringify(this.state))
   }
@@ -194,14 +202,13 @@ class Room<State = any> {
     if (!client) {
       return
     }
-    if (intentional) {
-      client.send(ServerActions.removedFromRoom)
-    }
+    client.send(ServerActions.removedFromRoom)
     this.clients = this.clients.filter(c => c !== client)
     if (this.onLeave) {
       this.onLeave(client, intentional)
     }
     if (client.sessionId === this.owner.sessionId) {
+      this.clients.forEach(c => this.removeClient(c.sessionId, false))
       this.dispose()
         .then()
         .catch()

@@ -1,22 +1,21 @@
 import { Client, Room } from '../index'
 import State from './State'
 
-class TestRoom extends Room<State> {
+class ChatRoom extends Room<State> {
   public onCreate() {
     this.setState(new State())
-    setTimeout(() => (this.state.name = 'woah!'), 500)
   }
 
   // @ts-ignore
   public onMessage(client: Client, message: any) {
-    const { action, payload } = message
+    const { action, data } = message
     if (!action) {
       return
     }
-    if (action === 'ADD_PLAYER') {
-      this.state.players[payload.name] = payload.age
+    if (action === 'CHAT') {
+      this.state.messages.push({ message: data, senderId: client.id })
     }
   }
 }
 
-export default TestRoom
+export default ChatRoom
