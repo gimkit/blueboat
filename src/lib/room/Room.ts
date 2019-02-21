@@ -79,7 +79,6 @@ class Room<State = any> {
   public onLeave?(client: Client, intentional: boolean): void
   public beforePatch?(lastState: State): void
   public afterPatch?(lastState: State): void
-
   public onDispose?(): void
 
   public setState = (newState: State) => {

@@ -34,7 +34,7 @@ class Server {
   public redis: RedisClient = null
 
   public state: ServerState = { availableRoomTypes: [], managingRooms: [] }
-  public listen: (port: number, callback: () => void) => void = null
+  public listen: (port: number, callback?: () => void) => void = null
   private app: Express.Application = null
   private io: SocketIO.Server = null
   private pubsub: nrp.NodeRedisPubSub
@@ -61,6 +61,8 @@ class Server {
     return
   }
 
+  public gracefullyShutdown = () => this.shutdown().then().catch()
+
   private onRoomMade = (room: Room) => this.state.managingRooms.push(room)
   private onRoomDisposed = (roomId: string) =>
     (this.state.managingRooms = this.state.managingRooms.filter(
@@ -69,7 +71,7 @@ class Server {
 
   private spawnServer = (redisOptions: RedisOptions) => {
     this.server = new HTTPServer(this.app)
-    this.listen = (port: number, callback: () => void) =>
+    this.listen = (port: number, callback?: () => void) =>
       this.server.listen(port, callback)
     this.io = socket({
       parser: MessagePackParser,
@@ -97,7 +99,7 @@ class Server {
     )
   }
 
-  private shutdown = async (signal: string, reason?: any) => {
+  private shutdown = async (signal?: string, reason?: any) => {
     if (signal === 'uncaughtException' && reason) {
       console.log(reason)
     }
