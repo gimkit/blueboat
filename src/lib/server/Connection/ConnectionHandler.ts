@@ -98,8 +98,8 @@ const ConnectionHandler = (options: ConnectionHandlerOptions) => {
 
   socket.on(
     ClientActions.sendMessage,
-    (message: { room: string; message?: any }) => {
-      if (message.message === undefined || !message.room) {
+    (message: { room: string; key: string; data?: any }) => {
+      if (message.key === undefined || !message.room) {
         return
       }
       pubsub.emit(
@@ -107,7 +107,7 @@ const ConnectionHandler = (options: ConnectionHandlerOptions) => {
         JSON.stringify({
           client,
           action: ClientActions.sendMessage,
-          data: message.message
+          data: {key: message.key, data: message.data}
         })
       )
     }

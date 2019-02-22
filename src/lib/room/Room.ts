@@ -75,7 +75,7 @@ class Room<State = any> {
   public onCreate?(options?: any): void
   public canClientJoin?(client: SimpleClient, options?: any): boolean
   public onJoin?(client: Client, options?: any): void
-  public onMessage?(client: Client, message: any): void
+  public onMessage?(client: Client, key: string, data?: any): void
   public onLeave?(client: Client, intentional: boolean): void
   public beforePatch?(lastState: State): void
   public afterPatch?(lastState: State): void
@@ -243,7 +243,7 @@ class Room<State = any> {
           return
         }
         if (this.onMessage) {
-          this.onMessage(roomClient, payload.data)
+          this.onMessage(roomClient, payload.data.key, payload.data.data)
         }
       }
     })
