@@ -5,4 +5,5 @@ export interface RoomSnapshot {
   type: string
   owner: SimpleClient
   metadata: any
+  createdAt: number
 }

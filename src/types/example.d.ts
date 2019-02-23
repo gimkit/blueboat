@@ -32,3 +32,8 @@ declare module 'sha.js' {
     // tslint:enable:no-method-signature
   }
 }
+
+declare module "*.txt" {
+  const content: string;
+  export default content;
+}

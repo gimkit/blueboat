@@ -35,7 +35,10 @@ class RoomFetcher {
           ? JSON.parse(fetchedRooms)
           : []
       rooms.forEach(async room => {
-        if (room.createdAt + MAX_SECONDS_LENGTH_OF_ROOM < Date.now()) {
+        if (
+          room.createdAt / 1000 + MAX_SECONDS_LENGTH_OF_ROOM <
+          Date.now() / 1000
+        ) {
           await this.removeRoom(room.id)
         }
       })

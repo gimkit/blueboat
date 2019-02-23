@@ -5,6 +5,7 @@ import AvaiableRoomType from '../../../types/AvailableRoomType'
 import { RoomSnapshot } from '../../../types/RoomSnapshot'
 import SimpleClient from '../../../types/SimpleClient'
 import Room from '../../room/Room'
+import CustomGameValues from '../CustomGameValues'
 import RedisClient from '../RedisClient'
 import RoomFetcher from '../RoomFetcher'
 
@@ -12,6 +13,7 @@ const CreateNewRoom = async (
   client: SimpleClient,
   io: Server,
   roomFetcher: RoomFetcher,
+  gameValues: CustomGameValues,
   pubsub: nrp.NodeRedisPubSub,
   socket: Socket,
   redis: RedisClient,
@@ -25,6 +27,7 @@ const CreateNewRoom = async (
       throw new Error(`${roomName} does not have a room handler`)
     }
     const roomId = nanoid()
+    const initialGameValues = await gameValues.getGameValues()
     const room = new roomToCreate.handler({
       io,
       pubsub,
@@ -34,13 +37,16 @@ const CreateNewRoom = async (
       options: roomToCreate.options,
       ownerSocket: socket,
       roomFetcher,
+      gameValues,
+      initialGameValues,
       onRoomDisposed
     })
     const snapshot: RoomSnapshot = {
       id: roomId,
       type: roomName,
       owner: client,
-      metadata: {}
+      metadata: {},
+      createdAt: Date.now()
     }
     await roomFetcher.addRoom(snapshot)
     return room as Room

@@ -6,9 +6,7 @@ class ChatRoom extends Room<State> {
     this.setState(new State())
   }
 
-  // @ts-ignore
-  public onMessage(client: Client, message: any) {
-    const { action, data } = message
+  public onMessage(client: Client, action: string, data?: any) {
     if (!action) {
       return
     }

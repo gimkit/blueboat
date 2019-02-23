@@ -11,9 +11,9 @@ const server = new Server({
   redisOptions: {
     host: 'localhost',
     port: 6379
-  }
+  },
+  admins: { blueboat: 'pass' }
 })
 
 server.registerRoom('Chat', ChatRoom)
-
 server.listen(4000, () => console.log('Server listening on port 4000'))

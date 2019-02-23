@@ -3,9 +3,10 @@ import { NodeRedisPubSub } from 'node-redis-pubsub'
 import { Server, Socket } from 'socket.io'
 import SimpleClient from '../../types/SimpleClient'
 import ClientActions from '../constants/ClientActions'
-import { PLAYER_LEFT } from '../constants/PubSubListeners'
+import { PLAYER_LEFT, REQUEST_INFO } from '../constants/PubSubListeners'
 import { ROOM_STATE_PATCH_RATE } from '../constants/RoomConfig'
 import ServerActions from '../constants/ServerActions'
+import CustomGameValues from '../server/CustomGameValues'
 import RedisClient from '../server/RedisClient'
 import RoomFetcher from '../server/RoomFetcher'
 import Client from './Client'
@@ -22,6 +23,8 @@ interface RoomOptions {
   options: {}
   onRoomDisposed: (roomId: string) => void
   roomFetcher: RoomFetcher
+  gameValues: CustomGameValues
+  initialGameValues: any
 }
 
 class Room<State = any> {
@@ -29,12 +32,14 @@ class Room<State = any> {
 
   // @ts-ignore
   public state: State = {}
+  public initialGameValues: any = {}
   public roomId: string
   public clients: Client[] = []
   public patchRate = ROOM_STATE_PATCH_RATE
   public options = {}
   public clock = new ClockManager()
   public metadata: any
+  public gameValues?: CustomGameValues
 
   // Private room Helpers and Objects
   private io: Server
@@ -65,6 +70,7 @@ class Room<State = any> {
     this.ownerSocket = options.ownerSocket
     this.onRoomDisposed = options.onRoomDisposed
     this.roomFetcher = options.roomFetcher
+    this.initialGameValues = options.initialGameValues
     if (options.options) {
       this.options = options.options
     }
@@ -216,6 +222,13 @@ class Room<State = any> {
 
   private pubSubListener = () => {
     this._gameMessagePubsub = this.pubsub.on(this.roomId, (d: string) => {
+      if (d === REQUEST_INFO) {
+        this.pubsub.emit(
+          REQUEST_INFO,
+          JSON.stringify({ clients: this.clients, state: this.state })
+        )
+        return
+      }
       const payload = JSON.parse(d) as {
         action: string
         client: SimpleClient

@@ -1,6 +1,7 @@
 import Redis from 'redis'
 
 const threeHours = 60 * 60 * 3
+const fiveYears = 60 * 60 * 24 * 365 * 5
 
 interface RedisClientOptions {
   clientOptions?: Redis.ClientOpts
@@ -19,13 +20,13 @@ class RedisClient {
     })
   }
 
-  public set(key: string, value: string) {
+  public set(key: string, value: string, noExpiration?: boolean) {
     return new Promise((resolve, reject) => {
       this.client.set(
         this.getKey(key),
         value,
         'EX',
-        threeHours,
+        noExpiration ? fiveYears : threeHours,
         (err, response) => {
           if (err) {
             reject(

@@ -8,6 +8,7 @@ import ClientActions from '../../constants/ClientActions'
 import { PLAYER_LEFT } from '../../constants/PubSubListeners'
 import ServerActions from '../../constants/ServerActions'
 import Room from '../../room/Room'
+import CustomGameValues from '../CustomGameValues';
 import RedisClient from '../RedisClient'
 import RoomFetcher from '../RoomFetcher'
 import CreateNewRoom from './CreateNewRoom'
@@ -20,6 +21,7 @@ interface ConnectionHandlerOptions {
   redis: RedisClient
   availableRoomTypes: AvaiableRoomType[]
   roomFetcher: RoomFetcher
+  gameValues: CustomGameValues
   onRoomMade: (room: Room) => void
   onRoomDisposed: (roomId: string) => void
 }
@@ -32,6 +34,7 @@ const ConnectionHandler = (options: ConnectionHandlerOptions) => {
     pubsub,
     availableRoomTypes,
     roomFetcher,
+    gameValues,
     onRoomMade,
     onRoomDisposed
   } = options
@@ -64,6 +67,7 @@ const ConnectionHandler = (options: ConnectionHandlerOptions) => {
           client,
           io,
           roomFetcher,
+          gameValues,
           pubsub,
           socket,
           redis,
