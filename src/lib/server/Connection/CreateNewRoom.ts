@@ -39,7 +39,8 @@ const CreateNewRoom = async (
       roomFetcher,
       gameValues,
       initialGameValues,
-      onRoomDisposed
+      onRoomDisposed,
+      roomType: roomToCreate.name
     })
     const snapshot: RoomSnapshot = {
       id: roomId,

@@ -1,13 +1,11 @@
 import bodyParser from 'body-parser'
 import Express from 'express'
+import basicAuth from 'express-basic-auth'
 import { Server as HTTPServer } from 'http'
 import nrp from 'node-redis-pubsub'
 import socket from 'socket.io'
 import MessagePackParser from 'socket.io-msgpack-parser'
 import redisAdapter from 'socket.io-redis'
-// tslint:disable-next-line
-const sticky = require('sticky-session')
-import basicAuth from 'express-basic-auth'
 import AvaiableRoomType from '../../types/AvailableRoomType'
 import GetGameValues from '../api/GetGameValues'
 import GetRoom from '../api/GetRoom'
@@ -102,12 +100,7 @@ class Server {
     this.server = new HTTPServer(this.app)
     this.makeRoutes(adminUsers)
     this.listen = (port: number, callback?: () => void) => {
-      const listen = () => {
-        if (!sticky.listen(this.server, port)) {
-          callback()
-        }
-      }
-      return listen()
+      this.server.listen(port, callback)
     }
     this.io = socket({
       parser: MessagePackParser,

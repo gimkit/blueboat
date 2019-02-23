@@ -6,7 +6,7 @@ interface CustomGameValueOptions {
 }
 
 /**
- * Can help find a list of currently available Rooms and their snapshots
+ * Used for global game values in which you can change in the admin panel
  */
 class CustomGameValues {
   public redis: RedisClient = null
@@ -35,10 +35,10 @@ class CustomGameValues {
     }
   }
 
-  public getGameValue = async (
+  public getGameValue = async<T> (
     key: string,
-    defaultValue?: any
-  ): Promise<any> => {
+    defaultValue?: T
+  ): Promise<T> => {
     try {
       const gameValues = await this.getGameValues()
       if (gameValues[key]) {

@@ -25,6 +25,7 @@ interface RoomOptions {
   roomFetcher: RoomFetcher
   gameValues: CustomGameValues
   initialGameValues: any
+  roomType: string
 }
 
 class Room<State = any> {
@@ -40,6 +41,7 @@ class Room<State = any> {
   public clock = new ClockManager()
   public metadata: any
   public gameValues?: CustomGameValues
+  public roomType: string
 
   // Private room Helpers and Objects
   private io: Server
@@ -70,6 +72,8 @@ class Room<State = any> {
     this.ownerSocket = options.ownerSocket
     this.onRoomDisposed = options.onRoomDisposed
     this.roomFetcher = options.roomFetcher
+    this.gameValues = options.gameValues
+    this.roomType = options.roomType
     this.initialGameValues = options.initialGameValues
     if (options.options) {
       this.options = options.options
@@ -82,7 +86,7 @@ class Room<State = any> {
   public canClientJoin?(client: SimpleClient, options?: any): boolean
   public onJoin?(client: Client, options?: any): void
   public onMessage?(client: Client, key: string, data?: any): void
-  public onLeave?(client: Client, intentional: boolean): void
+  public async onLeave?(client: Client, intentional: boolean): Promise<void>
   public beforePatch?(lastState: State): void
   public afterPatch?(lastState: State): void
   public onDispose?(): void
@@ -132,6 +136,19 @@ class Room<State = any> {
     } catch (e) {
       throw e
     }
+  }
+  public allowReconnection = (client: Client, seconds: number) => {
+    return new Promise<boolean>(resolve => {
+      if (this.owner.id === client.id) {
+        resolve(false)
+      }
+      this.clock.setTimeout(() => {
+        const reconnected = this.clients.filter(c => c.id === client.id).length
+          ? true
+          : false
+        resolve(reconnected)
+      }, seconds * 1000)
+    })
   }
 
   // tslint:disable-next-line
@@ -196,13 +213,20 @@ class Room<State = any> {
   }
 
   private clientRequestsToJoin = (client: SimpleClient, options: any) => {
+    // Two clients with the same ID are not allowed to join
+    if (this.clients.filter(c => c.id === client.id).length) {
+      return false
+    }
     if (this.canClientJoin) {
       return this.canClientJoin(client, options)
     }
     return true
   }
 
-  private removeClient = (clientSessionId: string, intentional: boolean) => {
+  private removeClient = async (
+    clientSessionId: string,
+    intentional: boolean
+  ) => {
     const client = this.clients.filter(c => c.sessionId === clientSessionId)[0]
     if (!client) {
       return
@@ -210,7 +234,7 @@ class Room<State = any> {
     client.send(ServerActions.removedFromRoom)
     this.clients = this.clients.filter(c => c !== client)
     if (this.onLeave) {
-      this.onLeave(client, intentional)
+      await this.onLeave(client, intentional)
     }
     if (client.sessionId === this.owner.sessionId) {
       this.clients.forEach(c => this.removeClient(c.sessionId, false))
