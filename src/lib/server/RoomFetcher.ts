@@ -25,7 +25,7 @@ class RoomFetcher {
     this.redis = options.redis
   }
 
-  public getListOfRooms = async () => {
+  public getListOfRooms = async (noDelete?: boolean) => {
     try {
       const fetchedRooms = await this.redis.get(LIST_OF_ROOM_IDS, true)
       const rooms: RoomItem[] =
@@ -34,14 +34,16 @@ class RoomFetcher {
         JSON.parse(fetchedRooms).forEach
           ? JSON.parse(fetchedRooms)
           : []
-      rooms.forEach(async room => {
-        if (
-          room.createdAt / 1000 + MAX_SECONDS_LENGTH_OF_ROOM <
-          Date.now() / 1000
-        ) {
-          await this.removeRoom(room.id)
-        }
-      })
+      if (!noDelete) {
+        rooms.forEach(async room => {
+          if (
+            room.createdAt / 1000 + MAX_SECONDS_LENGTH_OF_ROOM <
+            Date.now() / 1000
+          ) {
+            await this.removeRoom(room.id)
+          }
+        })
+      }
       return rooms
     } catch (e) {
       throw e
@@ -54,14 +56,17 @@ class RoomFetcher {
       const rooms = await Promise.all(
         roomList.map(async (r: RoomItem) => {
           try {
-            const room = await this.redis.get(ROOM_PREFIX + r.id)
-            return JSON.parse(room) as RoomSnapshot
+            const room = await this.redis.get(ROOM_PREFIX + r.id, true)
+            if (room) {
+              return JSON.parse(room) as RoomSnapshot
+            }
+            return null
           } catch (e) {
             throw e
           }
         })
       )
-      return rooms
+      return rooms.filter(room => room !== null)
     } catch (e) {
       throw e
     }
