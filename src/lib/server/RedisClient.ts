@@ -13,10 +13,21 @@ class RedisClient {
   public prefix: string
 
   constructor(options: RedisClientOptions) {
-    this.prefix = options.customPrefix || 'blueboat-'
+    this.prefix = options.customPrefix || 'blueboat:'
     this.client = Redis.createClient(options.clientOptions)
     this.client.on('error', (e: any) => {
       throw new Error(e)
+    })
+  }
+
+  public fetchKeys(prefix: string): Promise<string[]> {
+    return new Promise((resolve, reject) => {
+      this.client.keys(prefix, (err, keys) => {
+        if (err) {
+          return reject(err)
+        }
+        return resolve(keys)
+      })
     })
   }
 
@@ -61,7 +72,15 @@ class RedisClient {
     })
   }
 
-  private getKey = (key: string) => this.prefix + key
+  public remove(key: string) {
+    return new Promise(resolve => {
+      this.client.del(this.getKey(key), () => {
+        resolve(true)
+      })
+    })
+  }
+
+  public getKey = (key: string) => this.prefix + key
 }
 
 export default RedisClient

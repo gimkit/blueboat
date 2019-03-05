@@ -1,19 +1,10 @@
 import { RoomSnapshot } from '../../types/RoomSnapshot'
-import { LIST_OF_ROOM_IDS, ROOM_PREFIX } from '../constants/RedisKeys'
+import { ROOM_PREFIX } from '../constants/RedisKeys'
 import RedisClient from './RedisClient'
 
 interface RoomFetcherOptions {
   redis: RedisClient
 }
-
-interface RoomItem {
-  id: string
-  createdAt: number
-}
-
-const MAX_SECONDS_LENGTH_OF_ROOM = Number(
-  process.env.BLUEBOAT_MAX_ROOM_LENGTH || 10800
-)
 
 /**
  * Can help find a list of currently available Rooms and their snapshots
@@ -25,25 +16,14 @@ class RoomFetcher {
     this.redis = options.redis
   }
 
-  public getListOfRooms = async (noDelete?: boolean) => {
+  public getListOfRooms = async () => {
     try {
-      const fetchedRooms = await this.redis.get(LIST_OF_ROOM_IDS, true)
-      const rooms: RoomItem[] =
-        fetchedRooms &&
-        JSON.parse(fetchedRooms) &&
-        JSON.parse(fetchedRooms).forEach
-          ? JSON.parse(fetchedRooms)
-          : []
-      if (!noDelete) {
-        rooms.forEach(async room => {
-          if (
-            room.createdAt / 1000 + MAX_SECONDS_LENGTH_OF_ROOM <
-            Date.now() / 1000
-          ) {
-            await this.removeRoom(room.id)
-          }
-        })
-      }
+      const fetchedRooms = await this.redis.fetchKeys(
+        this.redis.getKey(ROOM_PREFIX) + '*'
+      )
+      const rooms = fetchedRooms.map(room =>
+        room.replace(this.redis.getKey(ROOM_PREFIX), '')
+      )
       return rooms
     } catch (e) {
       throw e
@@ -54,9 +34,9 @@ class RoomFetcher {
     try {
       const roomList = await this.getListOfRooms()
       const rooms = await Promise.all(
-        roomList.map(async (r: RoomItem) => {
+        roomList.map(async r => {
           try {
-            const room = await this.redis.get(ROOM_PREFIX + r.id, true)
+            const room = await this.redis.get(ROOM_PREFIX + r, true)
             if (room) {
               return JSON.parse(room) as RoomSnapshot
             }
@@ -74,12 +54,8 @@ class RoomFetcher {
 
   public findRoomById = async (roomId: string) => {
     try {
-      const rooms = await this.getListOfRoomsWithData()
-      const room = rooms.filter(r => r.id === roomId)[0]
-      if (!room) {
-        throw new Error(`No room found with id ${roomId}`)
-      }
-      return room
+      const room = await this.redis.get(ROOM_PREFIX + roomId)
+      return JSON.parse(room)
     } catch (e) {
       throw e
     }
@@ -99,10 +75,7 @@ class RoomFetcher {
 
   public addRoom = async (room: RoomSnapshot) => {
     try {
-      const rooms = await this.getListOfRooms()
-      const newRooms = [...rooms, { id: room.id, createdAt: Date.now() }]
       await this.redis.set(ROOM_PREFIX + room.id, JSON.stringify(room))
-      await this.redis.set(LIST_OF_ROOM_IDS, JSON.stringify(newRooms))
     } catch (e) {
       throw e
     }
@@ -110,10 +83,7 @@ class RoomFetcher {
 
   public removeRoom = async (roomId: string) => {
     try {
-      const rooms = await this.getListOfRooms()
-      const newRooms = rooms.filter(room => room.id !== roomId)
-      await this.redis.set(LIST_OF_ROOM_IDS, JSON.stringify(newRooms))
-      await this.redis.set(ROOM_PREFIX + roomId, '')
+      await this.redis.remove(ROOM_PREFIX + roomId)
     } catch (e) {
       throw e
     }

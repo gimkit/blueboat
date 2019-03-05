@@ -19,7 +19,7 @@ import CustomGameValues from './CustomGameValues'
 import RedisClient from './RedisClient'
 import RoomFetcher from './RoomFetcher'
 
-const WORKERS = Number(process.env.WEB_CONCURRENCY) || 2
+const WORKERS = Number(process.env.WEB_CONCURRENCY) || 1
 
 const PANEL_PREFIX = '/blueboat-panel'
 const PANEL_HTML = `
