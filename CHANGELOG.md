@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+<a name="0.1.44"></a>
+## [0.1.44](https://github.com/joshfeinsilber/blueboat/compare/v0.1.42...v0.1.44) (2019-03-06)
+
+
+
 <a name="0.1.42"></a>
 ## [0.1.42](https://github.com/joshfeinsilber/blueboat/compare/v0.1.38...v0.1.42) (2019-03-06)
 
