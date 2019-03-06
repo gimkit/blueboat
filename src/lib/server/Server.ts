@@ -6,7 +6,6 @@ import nrp from 'node-redis-pubsub'
 import socket from 'socket.io'
 import MessagePackParser from 'socket.io-msgpack-parser'
 import redisAdapter from 'socket.io-redis'
-import sticky from 'sticky-cluster'
 import AvaiableRoomType from '../../types/AvailableRoomType'
 import SimpleClient from '../../types/SimpleClient'
 import GetGameValues from '../api/GetGameValues'
@@ -22,8 +21,6 @@ import CustomGameValues from './CustomGameValues'
 import Emitter from './Emitter'
 import RedisClient from './RedisClient'
 import RoomFetcher from './RoomFetcher'
-
-const WORKERS = Number(process.env.WEB_CONCURRENCY) || 1
 
 const PANEL_PREFIX = '/blueboat-panel'
 const PANEL_HTML = `
@@ -119,16 +116,7 @@ class Server {
     this.server = new HTTPServer(this.app)
     this.makeRoutes(adminUsers)
     this.listen = (port: number, callback?: () => void) => {
-      sticky(
-        stickyListen => {
-          stickyListen(this.server)
-          callback()
-        },
-        {
-          concurrency: WORKERS,
-          port
-        }
-      )
+      this.server.listen(port, callback)
     }
     this.io = socket({
       parser: MessagePackParser,
