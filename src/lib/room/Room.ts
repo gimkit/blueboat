@@ -7,6 +7,7 @@ import { PLAYER_LEFT, REQUEST_INFO } from '../constants/PubSubListeners'
 import { ROOM_STATE_PATCH_RATE } from '../constants/RoomConfig'
 import ServerActions from '../constants/ServerActions'
 import CustomGameValues from '../server/CustomGameValues'
+import Emitter from '../server/Emitter'
 import RedisClient from '../server/RedisClient'
 import RoomFetcher from '../server/RoomFetcher'
 import Client from './Client'
@@ -128,8 +129,8 @@ class Room<State = any> {
     try {
       await this.roomFetcher.removeRoom(this.roomId)
       this.onRoomDisposed(this.roomId)
-      this._gameMessagePubsub()
-      this._playerPubsub()
+      Emitter.removeListener(this.roomId, this._gameMessagePubsub)
+      Emitter.removeListener(PLAYER_LEFT, this._playerPubsub)
       if (this.onDispose) {
         await this.onDispose()
       }
@@ -245,12 +246,8 @@ class Room<State = any> {
   }
 
   private pubSubListener = () => {
-    this._gameMessagePubsub = this.pubsub.on(this.roomId, (d: string) => {
-      if (d === REQUEST_INFO) {
-        this.pubsub.emit(
-          REQUEST_INFO,
-          JSON.stringify({ clients: this.clients, state: this.state })
-        )
+    this._gameMessagePubsub = (d: string) => {
+      if (!d) {
         return
       }
       const payload = JSON.parse(d) as {
@@ -258,7 +255,17 @@ class Room<State = any> {
         client: SimpleClient
         data?: any
       }
-      if (!payload || !payload.action || !payload.client) {
+      if (!payload || !payload.action) {
+        return
+      }
+      if (payload.action === REQUEST_INFO) {
+        this.pubsub.emit(
+          REQUEST_INFO,
+          JSON.stringify({ clients: this.clients, state: this.state })
+        )
+        return
+      }
+      if (!payload.client) {
         return
       }
       const { action, data, client } = payload
@@ -283,19 +290,20 @@ class Room<State = any> {
           this.onMessage(roomClient, payload.data.key, payload.data.data)
         }
       }
-    })
-    this._playerPubsub = this.pubsub.on(
-      PLAYER_LEFT,
-      (playerSessionId: string) => {
-        const client = this.clients.filter(
-          c => c.sessionId === playerSessionId
-        )[0]
-        if (!client) {
-          return
-        }
-        this.removeClient(client.sessionId, false)
+    }
+
+    this._playerPubsub = (playerSessionId: string) => {
+      const client = this.clients.filter(
+        c => c.sessionId === playerSessionId
+      )[0]
+      if (!client) {
+        return
       }
-    )
+      this.removeClient(client.sessionId, false)
+    }
+
+    Emitter.addListener(this.roomId, this._gameMessagePubsub)
+    Emitter.addListener(PLAYER_LEFT, this._playerPubsub)
   }
 }
 

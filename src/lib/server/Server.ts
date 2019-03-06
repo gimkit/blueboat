@@ -8,14 +8,18 @@ import MessagePackParser from 'socket.io-msgpack-parser'
 import redisAdapter from 'socket.io-redis'
 import sticky from 'sticky-cluster'
 import AvaiableRoomType from '../../types/AvailableRoomType'
+import SimpleClient from '../../types/SimpleClient'
 import GetGameValues from '../api/GetGameValues'
 import GetRoom from '../api/GetRoom'
 import GetRooms from '../api/GetRooms'
 import SetGameValues from '../api/SetGameValues'
+import InternalActions from '../constants/InternalActions'
+import { PLAYER_LEFT } from '../constants/PubSubListeners'
 import BUNDLED_PANEL_JS from '../panel/bundle'
 import Room from '../room/Room'
 import ConnectionHandler from './Connection/ConnectionHandler'
 import CustomGameValues from './CustomGameValues'
+import Emitter from './Emitter'
 import RedisClient from './RedisClient'
 import RoomFetcher from './RoomFetcher'
 
@@ -50,6 +54,7 @@ interface ServerArguments {
 interface ServerState {
   availableRoomTypes: AvaiableRoomType[]
   managingRooms: Room[]
+  managingRoomIds: string[]
 }
 
 const signals = ['SIGINT', 'SIGTERM', 'SIGUSR2', 'uncaughtException']
@@ -59,7 +64,11 @@ class Server {
   public redis: RedisClient = null
   public gameValues: CustomGameValues
 
-  public state: ServerState = { availableRoomTypes: [], managingRooms: [] }
+  public state: ServerState = {
+    availableRoomTypes: [],
+    managingRooms: [],
+    managingRoomIds: []
+  }
   public listen: (port: number, callback?: () => void) => void = null
   private app: Express.Application = null
   private io: SocketIO.Server = null
@@ -93,11 +102,18 @@ class Server {
       .then()
       .catch()
 
-  private onRoomMade = (room: Room) => this.state.managingRooms.push(room)
-  private onRoomDisposed = (roomId: string) =>
-    (this.state.managingRooms = this.state.managingRooms.filter(
+  private onRoomMade = (room: Room) => {
+    this.state.managingRooms.push(room)
+    this.state.managingRoomIds.push(room.roomId)
+  }
+  private onRoomDisposed = (roomId: string) => {
+    this.state.managingRooms = this.state.managingRooms.filter(
       room => room.roomId !== roomId
-    ))
+    )
+    this.state.managingRoomIds = this.state.managingRoomIds.filter(
+      r => r !== roomId
+    )
+  }
 
   private spawnServer = (redisOptions: RedisOptions, adminUsers: any) => {
     this.server = new HTTPServer(this.app)
@@ -135,11 +151,37 @@ class Server {
       })
     )
 
+    this.spawnPubSub()
+
     signals.forEach(signal =>
       process.once(signal as any, (reason?: any) =>
         this.shutdown(signal, reason)
       )
     )
+  }
+
+  private spawnPubSub = () => {
+    this.pubsub.on(PLAYER_LEFT, (playerId: string) => {
+      Emitter.emit(PLAYER_LEFT, playerId)
+    })
+    this.pubsub.on(InternalActions.newRoomMessage, (dataAsString: string) => {
+      const data = JSON.parse(dataAsString) as {
+        client: SimpleClient
+        room: string
+        action: string
+        data?: any
+      }
+      if (data.room && this.state.managingRoomIds.includes(data.room)) {
+        Emitter.emit(
+          data.room,
+          JSON.stringify({
+            client: data.client,
+            action: data.action,
+            data: data.data
+          })
+        )
+      }
+    })
   }
 
   private makeRoutes = (adminUsers: any) => {

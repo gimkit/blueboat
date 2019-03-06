@@ -1,6 +1,7 @@
 import { NodeRedisPubSub } from 'node-redis-pubsub'
 import SimpleClient from '../../../types/SimpleClient'
 import ClientActions from '../../constants/ClientActions'
+import InternalActions from '../../constants/InternalActions'
 import RoomFetcher from '../RoomFetcher'
 
 const JoinRoom = async (
@@ -13,8 +14,9 @@ const JoinRoom = async (
   try {
     await roomFetcher.findRoomById(roomId)
     pubsub.emit(
-      roomId,
+      InternalActions.newRoomMessage,
       JSON.stringify({
+        room: roomId,
         action: ClientActions.joinRoom,
         client,
         data: { options }
