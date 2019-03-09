@@ -25,6 +25,7 @@ interface ConnectionHandlerOptions {
   gameValues: CustomGameValues
   onRoomMade: (room: Room) => void
   onRoomDisposed: (roomId: string) => void
+  customRoomIdGenerator?: (roomName: string, options?: any) => string
 }
 
 const ConnectionHandler = (options: ConnectionHandlerOptions) => {
@@ -37,21 +38,13 @@ const ConnectionHandler = (options: ConnectionHandlerOptions) => {
     roomFetcher,
     gameValues,
     onRoomMade,
-    onRoomDisposed
+    onRoomDisposed,
+    customRoomIdGenerator
   } = options
 
   const userId = socket.handshake.query.id || nanoid()
   const client: SimpleClient = { id: userId, sessionId: socket.id }
   socket.emit(ServerActions.clientIdSet, userId)
-
-  socket.on(ClientActions.requestAvailableRooms, async () => {
-    try {
-      const rooms = await roomFetcher.getListOfRoomsWithData()
-      socket.emit(ServerActions.availableRooms, rooms)
-    } catch (e) {
-      return
-    }
-  })
 
   socket.on(
     ClientActions.createNewRoom,
@@ -74,7 +67,9 @@ const ConnectionHandler = (options: ConnectionHandlerOptions) => {
           redis,
           availableRoomTypes,
           onRoomDisposed,
-          request.type
+          request.type,
+          await roomFetcher.getListOfRooms(),
+          customRoomIdGenerator
         )
         onRoomMade(room)
         socket.emit(`${request.uniqueRequestId}-create`, room.roomId)

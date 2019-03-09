@@ -19,14 +19,28 @@ const CreateNewRoom = async (
   redis: RedisClient,
   availableRooms: AvaiableRoomType[],
   onRoomDisposed: (roomId: string) => void,
-  roomName: string
+  roomName: string,
+  existingRoomIds: string[],
+  customRoomIdGenerator?: (roomName: string, options?: any) => string
 ) => {
   try {
     const roomToCreate = availableRooms.filter(r => r.name === roomName)[0]
     if (!roomToCreate) {
       throw new Error(`${roomName} does not have a room handler`)
     }
-    const roomId = nanoid()
+    let roomId: string
+    for (let i = 0; i < 3; i++) {
+      if (roomId) { break }
+      const possibleRoomId = customRoomIdGenerator
+      ? customRoomIdGenerator(roomToCreate.name, roomToCreate.options)
+      : nanoid()
+      if (!existingRoomIds.includes(possibleRoomId)) {
+        roomId = possibleRoomId
+      }
+    }
+    if (!roomId) {
+      throw new Error('Failed to create room with unique ID')
+    }
     const initialGameValues = await gameValues.getGameValues()
     const room = new roomToCreate.handler({
       io,

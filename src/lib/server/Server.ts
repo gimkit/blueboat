@@ -46,6 +46,7 @@ interface ServerArguments {
   app: Express.Application
   redisOptions: RedisOptions
   admins: any
+  customRoomIdGenerator?: (roomName: string, options?: any) => string
 }
 
 interface ServerState {
@@ -71,6 +72,7 @@ class Server {
   private io: SocketIO.Server = null
   private pubsub: nrp.NodeRedisPubSub
   private roomFetcher: RoomFetcher = null
+  private customRoomIdGenerator = null
 
   constructor(options: ServerArguments) {
     this.app = options.app
@@ -81,6 +83,7 @@ class Server {
     this.pubsub = new nrp(options.redisOptions)
     this.roomFetcher = new RoomFetcher({ redis: this.redis })
     this.gameValues = new CustomGameValues({ redis: this.redis })
+    this.customRoomIdGenerator = options.customRoomIdGenerator
     this.spawnServer(options.redisOptions, options.admins || {})
   }
 
@@ -135,7 +138,8 @@ class Server {
         gameValues: this.gameValues,
         socket: s,
         onRoomMade: this.onRoomMade,
-        onRoomDisposed: this.onRoomDisposed
+        onRoomDisposed: this.onRoomDisposed,
+        customRoomIdGenerator: this.customRoomIdGenerator,
       })
     )
 

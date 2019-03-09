@@ -1,4 +1,4 @@
-import jsonpatch from 'fast-json-patch'
+import { StateContainer } from '@gamestdio/state-listener'
 import { NodeRedisPubSub } from 'node-redis-pubsub'
 import { Server, Socket } from 'socket.io'
 import SimpleClient from '../../types/SimpleClient'
@@ -48,6 +48,7 @@ class Room<State = any> {
   private io: Server
 
   private pubsub: NodeRedisPubSub
+  private stateContainer = new StateContainer({})
   // @ts-ignore
   private redis: RedisClient
   // @ts-ignore
@@ -93,6 +94,7 @@ class Room<State = any> {
   public onDispose?(): void
 
   public setState = (newState: State) => {
+    this.stateContainer.set(JSON.parse(JSON.stringify(newState)))
     this._lastState = newState
     this.state = newState
   }
@@ -152,17 +154,22 @@ class Room<State = any> {
     })
   }
 
+  private listen = (client: Client, change: string) => {
+    this.stateContainer.listen(
+      change,
+      dataChange => {
+        client.send(ServerActions.statePatch, { change, patch: dataChange })
+      },
+      true
+    )
+  }
+
   // tslint:disable-next-line
   private _sendNewPatch = () => {
     if (this.beforePatch) {
       this.beforePatch(this._lastState)
     }
-    const lastState = JSON.parse(JSON.stringify(this._lastState))
-    const currentState = JSON.parse(JSON.stringify(this.state))
-    const patches = jsonpatch.compare(lastState, currentState)
-    if (patches.length) {
-      this.broadcast(ServerActions.statePatch, patches)
-    }
+    this.stateContainer.set(JSON.parse(JSON.stringify(this.state)))
     if (this.afterPatch) {
       this.afterPatch(this._lastState)
     }
@@ -204,10 +211,6 @@ class Room<State = any> {
         this.onCreate(options)
       }
     }
-    client.send(
-      ServerActions.currentState,
-      JSON.parse(JSON.stringify(this.state))
-    )
     if (this.onJoin) {
       this.onJoin(client, options)
     }
@@ -285,6 +288,9 @@ class Room<State = any> {
         )[0]
         if (!roomClient) {
           return
+        }
+        if (payload.data.key === ClientActions.listen) {
+          this.listen(roomClient, payload.data.data)
         }
         if (this.onMessage) {
           this.onMessage(roomClient, payload.data.key, payload.data.data)
