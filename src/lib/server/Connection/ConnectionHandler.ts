@@ -69,6 +69,7 @@ const ConnectionHandler = (options: ConnectionHandlerOptions) => {
           onRoomDisposed,
           request.type,
           await roomFetcher.getListOfRooms(),
+          request.options,
           customRoomIdGenerator
         )
         onRoomMade(room)

@@ -21,6 +21,7 @@ const CreateNewRoom = async (
   onRoomDisposed: (roomId: string) => void,
   roomName: string,
   existingRoomIds: string[],
+  creatorOptions: any,
   customRoomIdGenerator?: (roomName: string, options?: any) => string
 ) => {
   try {
@@ -48,6 +49,7 @@ const CreateNewRoom = async (
       owner: client,
       roomId,
       redis,
+      creatorOptions,
       options: roomToCreate.options,
       ownerSocket: socket,
       roomFetcher,

@@ -20,6 +20,7 @@ interface RoomOptions {
   pubsub: NodeRedisPubSub
   owner: SimpleClient
   ownerSocket: Socket
+  creatorOptions: any
   options: {}
   onRoomDisposed: (roomId: string) => void
   roomFetcher: RoomFetcher
@@ -39,6 +40,7 @@ class Room<State = any> {
   public clients: Client[] = []
   public patchRate = ROOM_STATE_PATCH_RATE
   public options = {}
+  public creatorOptions = {}
   public metadata: any
   public gameValues?: CustomGameValues
   public roomType: string
@@ -78,6 +80,9 @@ class Room<State = any> {
     this.initialGameValues = options.initialGameValues
     if (options.options) {
       this.options = options.options
+    }
+    if (options.creatorOptions) {
+      this.creatorOptions = options.creatorOptions
     }
     this.onRoomCreated()
     if (this.onCreate) {
