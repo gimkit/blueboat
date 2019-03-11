@@ -19,6 +19,10 @@ class ChatRoom extends Room<State> {
     }
   }
 
+  public async beforeDispose() {
+    this.broadcast('DISPOSED')
+  }
+
   public onLeave = async (client: Client) => {
     const reconneced = await this.allowReconnection(client, 10)
     if (reconneced) {

@@ -42,6 +42,7 @@ class Room<State = any> {
   public metadata: any
   public gameValues?: CustomGameValues
   public roomType: string
+  public owner: SimpleClient
 
   // Private room Helpers and Objects
   private io: Server
@@ -52,7 +53,6 @@ class Room<State = any> {
   private redis: RedisClient
   // @ts-ignore
   private ownerSocket: Socket
-  private owner: SimpleClient
   private onRoomDisposed: (roomId: string) => void
   private roomFetcher: RoomFetcher
   private gameHostIsConnected = true
@@ -79,6 +79,19 @@ class Room<State = any> {
     if (options.options) {
       this.options = options.options
     }
+    this.onRoomCreated()
+    if (this.onCreate) {
+      this.onCreate(options.options)
+    }
+    this.clock.setInterval(this.checkIfGameHostIsConnected, 10000)
+    // Dispose room automatically in 2.5 hours
+    this.clock.setTimeout(
+      () =>
+        this.dispose()
+          .then()
+          .catch(),
+      1000 * 60 * 60 * 2.5
+    )
     this.pubSubListener()
   }
 
@@ -90,6 +103,7 @@ class Room<State = any> {
   public async onLeave?(client: Client, intentional: boolean): Promise<void>
   public beforePatch?(lastState: State): void
   public afterPatch?(lastState: State): void
+  public beforeDispose?(): Promise<void>
   public onDispose?(): void
 
   public setState = (newState: State) => {
@@ -128,14 +142,17 @@ class Room<State = any> {
 
   public dispose = async () => {
     try {
+      if (this.beforeDispose) {
+        await this.beforeDispose()
+      }
       this.clock.stop()
       await this.roomFetcher.removeRoom(this.roomId)
-      this.onRoomDisposed(this.roomId)
       Emitter.removeListener(this.roomId, this._gameMessagePubsub)
       Emitter.removeListener(PLAYER_LEFT, this._playerPubsub)
       if (this.onDispose) {
         await this.onDispose()
       }
+      this.onRoomDisposed(this.roomId)
     } catch (e) {
       throw e
     }
@@ -221,13 +238,6 @@ class Room<State = any> {
 
   private clientHasJoined = (client: Client, options?: any) => {
     client.send(ServerActions.joinedRoom)
-    if (this.clients.length === 1) {
-      this.onRoomCreated()
-      if (this.onCreate) {
-        this.onCreate(options)
-      }
-      this.clock.setInterval(this.checkIfGameHostIsConnected, 10000)
-    }
     if (this.onJoin) {
       this.onJoin(client, options)
     }
@@ -258,9 +268,10 @@ class Room<State = any> {
       await this.onLeave(client, intentional)
     }
     if (client.sessionId === this.owner.sessionId) {
-      this.clients.forEach(c => this.removeClient(c.sessionId, false))
       this.dispose()
-        .then()
+        .then(() =>
+          this.clients.forEach(c => this.removeClient(c.sessionId, false))
+        )
         .catch()
     }
   }
@@ -328,6 +339,8 @@ class Room<State = any> {
         return
       }
       this.removeClient(client.sessionId, false)
+        .then()
+        .catch()
     }
 
     Emitter.addListener(this.roomId, this._gameMessagePubsub)
