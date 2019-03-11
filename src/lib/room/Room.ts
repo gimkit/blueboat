@@ -1,4 +1,5 @@
 import { StateContainer } from '@gamestdio/state-listener'
+import Clock, { Delayed } from '@gamestdio/timer'
 import { NodeRedisPubSub } from 'node-redis-pubsub'
 import { Server, Socket } from 'socket.io'
 import SimpleClient from '../../types/SimpleClient'
@@ -11,8 +12,6 @@ import Emitter from '../server/Emitter'
 import RedisClient from '../server/RedisClient'
 import RoomFetcher from '../server/RoomFetcher'
 import Client from './Client'
-import Clock from './Clock'
-import ClockManager from './ClockManager'
 
 interface RoomOptions {
   io: Server
@@ -36,10 +35,10 @@ class Room<State = any> {
   public state: State = {}
   public initialGameValues: any = {}
   public roomId: string
+  public clock = new Clock(true)
   public clients: Client[] = []
   public patchRate = ROOM_STATE_PATCH_RATE
   public options = {}
-  public clock = new ClockManager()
   public metadata: any
   public gameValues?: CustomGameValues
   public roomType: string
@@ -56,9 +55,9 @@ class Room<State = any> {
   private owner: SimpleClient
   private onRoomDisposed: (roomId: string) => void
   private roomFetcher: RoomFetcher
-
+  private gameHostIsConnected = true
   /* tslint:disable */
-  private _patchInterval: Clock
+  private _patchInterval: Delayed
   private _gameMessagePubsub: any
   private _playerPubsub: any
   // @ts-ignore
@@ -110,7 +109,7 @@ class Room<State = any> {
     this.patchRate = patchRateInMilliseconds
     if (this._patchInterval) {
       if (this._patchInterval) {
-        this._patchInterval.dispose()
+        this._patchInterval.clear()
         this._patchInterval = undefined
       }
     }
@@ -129,6 +128,7 @@ class Room<State = any> {
 
   public dispose = async () => {
     try {
+      this.clock.stop()
       await this.roomFetcher.removeRoom(this.roomId)
       this.onRoomDisposed(this.roomId)
       Emitter.removeListener(this.roomId, this._gameMessagePubsub)
@@ -154,15 +154,31 @@ class Room<State = any> {
     })
   }
 
+  private checkIfGameHostIsConnected = () => {
+    if (!this.gameHostIsConnected) {
+      this.dispose()
+        .then()
+        .catch()
+      return
+    }
+    this.gameHostIsConnected = false
+    return
+  }
+
   private listen = (client: Client, change: string) => {
     this.stateContainer.listen(
       change,
       dataChange => {
-        client.send(ServerActions.statePatch, { change, patch: dataChange })
+        if (this.clientExists(client.sessionId)) {
+          client.send(ServerActions.statePatch, { change, patch: dataChange })
+        }
       },
       true
     )
   }
+
+  private clientExists = (sessionId: string) =>
+    this.clients.map(c => c.sessionId).includes(sessionId)
 
   // tslint:disable-next-line
   private _sendNewPatch = () => {
@@ -210,6 +226,7 @@ class Room<State = any> {
       if (this.onCreate) {
         this.onCreate(options)
       }
+      this.clock.setInterval(this.checkIfGameHostIsConnected, 10000)
     }
     if (this.onJoin) {
       this.onJoin(client, options)
@@ -291,6 +308,11 @@ class Room<State = any> {
         }
         if (payload.data.key === ClientActions.listen) {
           this.listen(roomClient, payload.data.data)
+          return
+        }
+        if (payload.data.key === ClientActions.ping) {
+          this.gameHostIsConnected = true
+          return
         }
         if (this.onMessage) {
           this.onMessage(roomClient, payload.data.key, payload.data.data)
