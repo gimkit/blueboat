@@ -39,8 +39,8 @@ class Room<State = any> {
   public clock = new Clock(true)
   public clients: Client[] = []
   public patchRate = ROOM_STATE_PATCH_RATE
-  public options = {}
-  public creatorOptions = {}
+  public options = {} as any
+  public creatorOptions = {} as any
   public metadata: any
   public gameValues?: CustomGameValues
   public roomType: string
