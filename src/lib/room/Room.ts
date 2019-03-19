@@ -250,8 +250,10 @@ class Room<State = any> {
 
   private clientRequestsToJoin = (client: SimpleClient, options: any) => {
     // Two clients with the same ID are not allowed to join
-    if (this.clients.filter(c => c.id === client.id).length) {
-      return false
+    if (process.env.BLUEBOAT_NO_SAME_CLIENTS) {
+      if (this.clients.filter(c => c.id === client.id).length) {
+        return false
+      }
     }
     if (this.canClientJoin) {
       return this.canClientJoin(client, options)
