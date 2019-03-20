@@ -7,12 +7,10 @@ import socket from 'socket.io'
 import MessagePackParser from 'socket.io-msgpack-parser'
 import redisAdapter from 'socket.io-redis'
 import AvaiableRoomType from '../../types/AvailableRoomType'
-import SimpleClient from '../../types/SimpleClient'
 import GetGameValues from '../api/GetGameValues'
 import GetRoom from '../api/GetRoom'
 import GetRooms from '../api/GetRooms'
 import SetGameValues from '../api/SetGameValues'
-import InternalActions from '../constants/InternalActions'
 import { PLAYER_LEFT } from '../constants/PubSubListeners'
 import BUNDLED_PANEL_JS from '../panel/bundle'
 import Room from '../room/Room'
@@ -139,7 +137,7 @@ class Server {
         socket: s,
         onRoomMade: this.onRoomMade,
         onRoomDisposed: this.onRoomDisposed,
-        customRoomIdGenerator: this.customRoomIdGenerator,
+        customRoomIdGenerator: this.customRoomIdGenerator
       })
     )
 
@@ -155,24 +153,6 @@ class Server {
   private spawnPubSub = () => {
     this.pubsub.on(PLAYER_LEFT, (playerId: string) => {
       Emitter.emit(PLAYER_LEFT, playerId)
-    })
-    this.pubsub.on(InternalActions.newRoomMessage, (dataAsString: string) => {
-      const data = JSON.parse(dataAsString) as {
-        client: SimpleClient
-        room: string
-        action: string
-        data?: any
-      }
-      if (data.room && this.state.managingRoomIds.includes(data.room)) {
-        Emitter.emit(
-          data.room,
-          JSON.stringify({
-            client: data.client,
-            action: data.action,
-            data: data.data
-          })
-        )
-      }
     })
   }
 

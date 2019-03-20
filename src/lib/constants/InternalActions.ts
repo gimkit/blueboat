@@ -1,5 +1,3 @@
-const actions = {
-  newRoomMessage: 'NEW_ROOM_MESSAGE'
-}
+const actions = {}
 
 export default actions

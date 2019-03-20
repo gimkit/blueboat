@@ -152,7 +152,7 @@ class Room<State = any> {
       }
       this.clock.stop()
       await this.roomFetcher.removeRoom(this.roomId)
-      Emitter.removeListener(this.roomId, this._gameMessagePubsub)
+      this._gameMessagePubsub()
       Emitter.removeListener(PLAYER_LEFT, this._playerPubsub)
       if (this.onDispose) {
         await this.onDispose()
@@ -284,7 +284,7 @@ class Room<State = any> {
   }
 
   private pubSubListener = () => {
-    this._gameMessagePubsub = (d: string) => {
+    this._gameMessagePubsub = this.pubsub.on(this.roomId, (d: string) => {
       if (!d) {
         return
       }
@@ -336,7 +336,7 @@ class Room<State = any> {
           this.onMessage(roomClient, payload.data.key, payload.data.data)
         }
       }
-    }
+    })
 
     this._playerPubsub = (playerSessionId: string) => {
       const client = this.clients.filter(
@@ -349,8 +349,6 @@ class Room<State = any> {
         .then()
         .catch()
     }
-
-    Emitter.addListener(this.roomId, this._gameMessagePubsub)
     Emitter.addListener(PLAYER_LEFT, this._playerPubsub)
   }
 }

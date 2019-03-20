@@ -1,4 +1,3 @@
-import InternalActions from '../constants/InternalActions'
 import { REQUEST_INFO } from '../constants/PubSubListeners'
 import Server from '../server/Server'
 
@@ -7,8 +6,8 @@ const GetRoom = (req: any, res: any) => {
   const gameServer = req.gameServer as Server
   // @ts-ignore
   gameServer.pubsub.emit(
-    InternalActions.newRoomMessage,
-    JSON.stringify({ room: req.params.room, action: REQUEST_INFO })
+    req.params.room,
+    JSON.stringify({ action: REQUEST_INFO })
   )
   // @ts-ignore
   const listener = gameServer.pubsub.on(REQUEST_INFO, info => {

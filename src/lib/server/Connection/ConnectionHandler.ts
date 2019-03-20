@@ -5,7 +5,6 @@ import Socket from 'socket.io'
 import AvaiableRoomType from '../../../types/AvailableRoomType'
 import SimpleClient from '../../../types/SimpleClient'
 import ClientActions from '../../constants/ClientActions'
-import InternalActions from '../../constants/InternalActions'
 import { PLAYER_LEFT } from '../../constants/PubSubListeners'
 import ServerActions from '../../constants/ServerActions'
 import Room from '../../room/Room'
@@ -104,9 +103,8 @@ const ConnectionHandler = (options: ConnectionHandlerOptions) => {
         return
       }
       pubsub.emit(
-        InternalActions.newRoomMessage,
+        message.room,
         JSON.stringify({
-          room: message.room,
           client,
           action: ClientActions.sendMessage,
           data: { key: message.key, data: message.data }
