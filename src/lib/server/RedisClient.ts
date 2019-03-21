@@ -1,20 +1,20 @@
-import Redis from 'redis'
+import Redis from 'ioredis'
 
 const threeHours = 60 * 60 * 3
 const fiveYears = 60 * 60 * 24 * 365 * 5
 
 interface RedisClientOptions {
-  clientOptions?: Redis.ClientOpts
+  clientOptions?: Redis.RedisOptions
   customPrefix?: string
 }
 
 class RedisClient {
-  public client: Redis.RedisClient
+  public client: Redis.Redis
   public prefix: string
 
   constructor(options: RedisClientOptions) {
     this.prefix = options.customPrefix || 'blueboat:'
-    this.client = Redis.createClient(options.clientOptions)
+    this.client = new Redis(options.clientOptions)
     this.client.on('error', (e: any) => {
       throw new Error(e)
     })
@@ -74,9 +74,11 @@ class RedisClient {
 
   public remove(key: string) {
     return new Promise(resolve => {
-      this.client.del(this.getKey(key), () => {
-        resolve(true)
-      })
+      this.client
+        .del(this.getKey(key))
+        .then()
+        .catch()
+        .finally(() => resolve(true))
     })
   }
 

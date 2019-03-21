@@ -1,5 +1,4 @@
 import nanoid from 'nanoid'
-import nrp from 'node-redis-pubsub'
 import serializeError from 'serialize-error'
 import Socket from 'socket.io'
 import AvaiableRoomType from '../../../types/AvailableRoomType'
@@ -7,6 +6,7 @@ import SimpleClient from '../../../types/SimpleClient'
 import ClientActions from '../../constants/ClientActions'
 import { PLAYER_LEFT } from '../../constants/PubSubListeners'
 import ServerActions from '../../constants/ServerActions'
+import PubSub from '../../pubsub/PubSub'
 import Room from '../../room/Room'
 import CustomGameValues from '../CustomGameValues'
 import RedisClient from '../RedisClient'
@@ -17,7 +17,7 @@ import JoinRoom from './JoinRoom'
 interface ConnectionHandlerOptions {
   io: Socket.Server
   socket: Socket.Socket
-  pubsub: nrp.NodeRedisPubSub
+  pubsub: PubSub
   redis: RedisClient
   availableRoomTypes: AvaiableRoomType[]
   roomFetcher: RoomFetcher
@@ -102,7 +102,7 @@ const ConnectionHandler = (options: ConnectionHandlerOptions) => {
       if (message.key === undefined || !message.room) {
         return
       }
-      pubsub.emit(
+      pubsub.publish(
         message.room,
         JSON.stringify({
           client,
@@ -114,7 +114,7 @@ const ConnectionHandler = (options: ConnectionHandlerOptions) => {
   )
 
   socket.on('disconnect', () => {
-    pubsub.emit(PLAYER_LEFT, socket.id)
+    pubsub.publish(PLAYER_LEFT, socket.id)
   })
 }
 

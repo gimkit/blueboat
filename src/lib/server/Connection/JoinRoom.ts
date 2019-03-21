@@ -1,18 +1,18 @@
-import { NodeRedisPubSub } from 'node-redis-pubsub'
 import SimpleClient from '../../../types/SimpleClient'
 import ClientActions from '../../constants/ClientActions'
+import PubSub from '../../pubsub/PubSub'
 import RoomFetcher from '../RoomFetcher'
 
 const JoinRoom = async (
   roomId: string,
   client: SimpleClient,
   roomFetcher: RoomFetcher,
-  pubsub: NodeRedisPubSub,
+  pubsub: PubSub,
   options?: any
 ) => {
   try {
     await roomFetcher.findRoomById(roomId)
-    pubsub.emit(
+    pubsub.publish(
       roomId,
       JSON.stringify({
         action: ClientActions.joinRoom,

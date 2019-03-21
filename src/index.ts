@@ -1,3 +1,6 @@
+import EventEmitterPubSub from './lib/pubsub/EventEmitter'
+import PubSub from './lib/pubsub/PubSub'
+import RedisPubSub from './lib/pubsub/Redis'
 import Client from './lib/room/Client'
 import Room from './lib/room/Room'
 import Server from './lib/server/Server'
@@ -9,4 +12,12 @@ export interface EntityMap<T> {
 
 export { nonenumerable as nosync } from 'nonenumerable'
 
-export { Server, Room, Client, SimpleClient }
+export {
+  Server,
+  Room,
+  Client,
+  SimpleClient,
+  PubSub,
+  RedisPubSub,
+  EventEmitterPubSub
+}

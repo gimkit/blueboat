@@ -13,11 +13,11 @@ const GetRoom = (req: any, res: any) => {
   const listener = gameServer.pubsub.on(REQUEST_INFO, info => {
     res.send(JSON.parse(info))
     hasSent = true
-    listener()
+    listener.unsubscribe()
   })
   setTimeout(() => {
     if (!hasSent) {
-      listener()
+      listener.unsubscribe()
       res.status(404).send('No room found')
     }
   }, 5000)

@@ -2,7 +2,6 @@ import bodyParser from 'body-parser'
 import Express from 'express'
 import basicAuth from 'express-basic-auth'
 import { Server as HTTPServer } from 'http'
-import nrp from 'node-redis-pubsub'
 import socket from 'socket.io'
 import MessagePackParser from 'socket.io-msgpack-parser'
 import redisAdapter from 'socket.io-redis'
@@ -13,6 +12,7 @@ import GetRooms from '../api/GetRooms'
 import SetGameValues from '../api/SetGameValues'
 import { PLAYER_LEFT } from '../constants/PubSubListeners'
 import BUNDLED_PANEL_JS from '../panel/bundle'
+import PubSub from '../pubsub/PubSub'
 import Room from '../room/Room'
 import ConnectionHandler from './Connection/ConnectionHandler'
 import CustomGameValues from './CustomGameValues'
@@ -43,6 +43,7 @@ interface RedisOptions {
 interface ServerArguments {
   app: Express.Application
   redisOptions: RedisOptions
+  pubsub: PubSub
   admins: any
   customRoomIdGenerator?: (roomName: string, options?: any) => string
 }
@@ -68,7 +69,7 @@ class Server {
   public listen: (port: number, callback?: () => void) => void = null
   private app: Express.Application = null
   private io: SocketIO.Server = null
-  private pubsub: nrp.NodeRedisPubSub
+  private pubsub: PubSub
   private roomFetcher: RoomFetcher = null
   private customRoomIdGenerator = null
 
@@ -78,7 +79,7 @@ class Server {
       clientOptions: options.redisOptions as any
     })
     // @ts-ignore
-    this.pubsub = new nrp(options.redisOptions)
+    this.pubsub = options.pubsub
     this.roomFetcher = new RoomFetcher({ redis: this.redis })
     this.gameValues = new CustomGameValues({ redis: this.redis })
     this.customRoomIdGenerator = options.customRoomIdGenerator

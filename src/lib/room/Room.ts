@@ -1,12 +1,12 @@
 import { StateContainer } from '@gamestdio/state-listener'
 import Clock, { Delayed } from '@gamestdio/timer'
-import { NodeRedisPubSub } from 'node-redis-pubsub'
 import { Server, Socket } from 'socket.io'
 import SimpleClient from '../../types/SimpleClient'
 import ClientActions from '../constants/ClientActions'
 import { PLAYER_LEFT, REQUEST_INFO } from '../constants/PubSubListeners'
 import { ROOM_STATE_PATCH_RATE } from '../constants/RoomConfig'
 import ServerActions from '../constants/ServerActions'
+import PubSub, { OnFunction } from '../pubsub/PubSub'
 import CustomGameValues from '../server/CustomGameValues'
 import Emitter from '../server/Emitter'
 import RedisClient from '../server/RedisClient'
@@ -17,7 +17,7 @@ interface RoomOptions {
   io: Server
   roomId: string
   redis: RedisClient
-  pubsub: NodeRedisPubSub
+  pubsub: PubSub
   owner: SimpleClient
   ownerSocket: Socket
   creatorOptions: any
@@ -49,7 +49,7 @@ class Room<State = any> {
   // Private room Helpers and Objects
   private io: Server
 
-  private pubsub: NodeRedisPubSub
+  private pubsub: PubSub
   private stateContainer = new StateContainer({})
   // @ts-ignore
   private redis: RedisClient
@@ -60,7 +60,7 @@ class Room<State = any> {
   private gameHostIsConnected = true
   /* tslint:disable */
   private _patchInterval: Delayed
-  private _gameMessagePubsub: any
+  private _gameMessagePubsub: ReturnType<OnFunction>
   private _playerPubsub: any
   // @ts-ignore
   private _lastState: State = {}
@@ -152,7 +152,7 @@ class Room<State = any> {
       }
       this.clock.stop()
       await this.roomFetcher.removeRoom(this.roomId)
-      this._gameMessagePubsub()
+      this._gameMessagePubsub.unsubscribe()
       Emitter.removeListener(PLAYER_LEFT, this._playerPubsub)
       if (this.onDispose) {
         await this.onDispose()
@@ -297,7 +297,7 @@ class Room<State = any> {
         return
       }
       if (payload.action === REQUEST_INFO) {
-        this.pubsub.emit(
+        this.pubsub.publish(
           REQUEST_INFO,
           JSON.stringify({ clients: this.clients, state: this.state })
         )

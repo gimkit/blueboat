@@ -1,9 +1,9 @@
 import nanoid from 'nanoid'
-import nrp from 'node-redis-pubsub'
 import { Server, Socket } from 'socket.io'
 import AvaiableRoomType from '../../../types/AvailableRoomType'
 import { RoomSnapshot } from '../../../types/RoomSnapshot'
 import SimpleClient from '../../../types/SimpleClient'
+import PubSub from '../../pubsub/PubSub';
 import Room from '../../room/Room'
 import CustomGameValues from '../CustomGameValues'
 import RedisClient from '../RedisClient'
@@ -14,7 +14,7 @@ const CreateNewRoom = async (
   io: Server,
   roomFetcher: RoomFetcher,
   gameValues: CustomGameValues,
-  pubsub: nrp.NodeRedisPubSub,
+  pubsub: PubSub,
   socket: Socket,
   redis: RedisClient,
   availableRooms: AvaiableRoomType[],
