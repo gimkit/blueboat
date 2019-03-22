@@ -1,7 +1,6 @@
 import Redis from 'ioredis'
 
 const threeHours = 60 * 60 * 3
-const fiveYears = 60 * 60 * 24 * 365 * 5
 
 interface RedisClientOptions {
   clientOptions?: Redis.RedisOptions
@@ -20,66 +19,53 @@ class RedisClient {
     })
   }
 
-  public fetchKeys(prefix: string): Promise<string[]> {
-    return new Promise((resolve, reject) => {
-      this.client.keys(prefix, (err, keys) => {
-        if (err) {
-          return reject(err)
-        }
-        return resolve(keys)
-      })
-    })
+  public fetchKeys = async (prefix: string) => {
+    try {
+      const keys = await this.client.keys(prefix)
+      return keys
+    } catch (e) {
+      throw e
+    }
   }
 
-  public set(key: string, value: string, noExpiration?: boolean) {
-    return new Promise((resolve, reject) => {
-      this.client.set(
-        this.getKey(key),
-        value,
-        'EX',
-        noExpiration ? fiveYears : threeHours,
-        (err, response) => {
-          if (err) {
-            reject(
-              new Error(
-                this.getKey(key) + ' - failed to set value - ' + err.message
-              )
-            )
-          } else {
-            resolve(response)
-          }
-        }
+  public set = async (key: string, value: string, noExpiration?: boolean) => {
+    try {
+      if (noExpiration) {
+        await this.client.set(key, value)
+      } else {
+        await this.client.set(key, value, 'EX', threeHours)
+      }
+    } catch (e) {
+      throw new Error(
+        this.getKey(key) + ' - failed to set value - ' + e && e.message
+          ? e.message
+          : 'No error message'
       )
-    })
+    }
   }
 
-  public get(key: string, resolveIfNoData?: boolean): Promise<any> {
-    return new Promise((resolve, reject) => {
-      this.client.get(this.getKey(key), (err, response) => {
-        if (err || !response) {
-          if (err && err.message) {
-            reject(err.message)
-          }
-          if (resolveIfNoData) {
-            resolve(null)
-          } else {
-            reject(this.getKey(key) + ' - No data received')
-          }
+  public get = async (key: string, resolveIfNoData?: boolean) => {
+    try {
+      const value = await this.client.get(this.getKey(key))
+      if (!value) {
+        if (resolveIfNoData) {
+          return null
         } else {
-          resolve(response)
+          throw new Error(this.getKey(key) + ' - No data received')
         }
-      })
-    })
+      }
+      return value
+    } catch (e) {
+      throw e
+    }
   }
 
-  public remove(key: string) {
-    return new Promise(resolve => {
-      this.client
-        .del(this.getKey(key))
-        .then()
-        .catch()
-        .finally(() => resolve(true))
-    })
+  public remove = async (key: string) => {
+    try {
+      await this.client.del(this.getKey(key))
+    } catch (e) {
+      throw e
+    }
   }
 
   public getKey = (key: string) => this.prefix + key

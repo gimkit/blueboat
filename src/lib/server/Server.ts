@@ -2,6 +2,7 @@ import bodyParser from 'body-parser'
 import Express from 'express'
 import basicAuth from 'express-basic-auth'
 import { Server as HTTPServer } from 'http'
+import  {RedisOptions } from 'ioredis';
 import socket from 'socket.io'
 import MessagePackParser from 'socket.io-msgpack-parser'
 import redisAdapter from 'socket.io-redis'
@@ -32,13 +33,6 @@ ${BUNDLED_PANEL_JS.js}
 </script>
 </html>
 `
-
-interface RedisOptions {
-  host: string
-  port: number
-  auth_pass?: string
-  requestsTimeout?: number
-}
 
 interface ServerArguments {
   app: Express.Application
