@@ -31,9 +31,9 @@ class RedisClient {
   public set = async (key: string, value: string, noExpiration?: boolean) => {
     try {
       if (noExpiration) {
-        await this.client.set(key, value)
+        await this.client.set(this.getKey(key), value)
       } else {
-        await this.client.set(key, value, 'EX', threeHours)
+        await this.client.set(this.getKey(key), value, 'EX', threeHours)
       }
     } catch (e) {
       throw new Error(
