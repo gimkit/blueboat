@@ -105,14 +105,11 @@ const ConnectionHandler = (options: ConnectionHandlerOptions) => {
       if (message.key === undefined || !message.room) {
         return
       }
-      pubsub.publish(
-        message.room,
-        JSON.stringify({
-          client,
-          action: ClientActions.sendMessage,
-          data: { key: message.key, data: message.data }
-        })
-      )
+      pubsub.publish(message.room, {
+        client,
+        action: ClientActions.sendMessage,
+        data: { key: message.key, data: message.data }
+      })
     }
   )
 

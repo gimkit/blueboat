@@ -284,11 +284,8 @@ class Room<State = any> {
   }
 
   private pubSubListener = () => {
-    this._gameMessagePubsub = this.pubsub.on(this.roomId, (d: string) => {
-      if (!d) {
-        return
-      }
-      const payload = JSON.parse(d) as {
+    this._gameMessagePubsub = this.pubsub.on(this.roomId, (d: any) => {
+      const payload = d as {
         action: string
         client: SimpleClient
         data?: any
@@ -297,10 +294,10 @@ class Room<State = any> {
         return
       }
       if (payload.action === REQUEST_INFO) {
-        this.pubsub.publish(
-          REQUEST_INFO,
-          JSON.stringify({ clients: this.clients, state: this.state })
-        )
+        this.pubsub.publish(REQUEST_INFO, {
+          clients: this.clients,
+          state: this.state
+        })
         return
       }
       if (!payload.client) {
