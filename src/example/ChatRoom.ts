@@ -14,6 +14,9 @@ class ChatRoom extends Room<State> {
     if (!action) {
       return
     }
+    if (action === 'LATENCY') {
+      client.send('LATENCY', data)
+    }
     if (action === 'CHAT') {
       this.state.messages.push({ message: data, senderId: client.id })
     }

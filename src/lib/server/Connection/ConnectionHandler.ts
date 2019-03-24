@@ -67,11 +67,14 @@ const ConnectionHandler = (options: ConnectionHandlerOptions) => {
           availableRoomTypes,
           onRoomDisposed,
           request.type,
-          await roomFetcher.getListOfRooms(),
+          process.env.BLUEBOAT_UNIQUE_CHECK
+            ? await roomFetcher.getListOfRooms()
+            : [],
           request.options,
           customRoomIdGenerator
         )
         onRoomMade(room)
+
         socket.emit(`${request.uniqueRequestId}-create`, room.roomId)
       } catch (e) {
         socket.emit(`${request.uniqueRequestId}-error`, serializeError(e))

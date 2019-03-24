@@ -2,7 +2,7 @@ import bodyParser from 'body-parser'
 import Express from 'express'
 import basicAuth from 'express-basic-auth'
 import { Server as HTTPServer } from 'http'
-import  {RedisOptions } from 'ioredis';
+import { RedisOptions } from 'ioredis'
 import socket from 'socket.io'
 import MessagePackParser from 'socket.io-msgpack-parser'
 import redisAdapter from 'socket.io-redis'
@@ -44,8 +44,7 @@ interface ServerArguments {
 
 interface ServerState {
   availableRoomTypes: AvaiableRoomType[]
-  managingRooms: Room[]
-  managingRoomIds: string[]
+  managingRooms: Map<string, Room>
 }
 
 const signals = ['SIGINT', 'SIGTERM', 'SIGUSR2', 'uncaughtException']
@@ -57,8 +56,7 @@ class Server {
 
   public state: ServerState = {
     availableRoomTypes: [],
-    managingRooms: [],
-    managingRoomIds: []
+    managingRooms: new Map()
   }
   public listen: (port: number, callback?: () => void) => void = null
   private app: Express.Application = null
@@ -96,16 +94,10 @@ class Server {
       .catch()
 
   private onRoomMade = (room: Room) => {
-    this.state.managingRooms.push(room)
-    this.state.managingRoomIds.push(room.roomId)
+    this.state.managingRooms.set(room.roomId, room)
   }
   private onRoomDisposed = (roomId: string) => {
-    this.state.managingRooms = this.state.managingRooms.filter(
-      room => room.roomId !== roomId
-    )
-    this.state.managingRoomIds = this.state.managingRoomIds.filter(
-      r => r !== roomId
-    )
+    this.state.managingRooms.delete(roomId)
   }
 
   private spawnServer = (redisOptions: RedisOptions, adminUsers: any) => {
@@ -177,10 +169,17 @@ class Server {
       console.log(reason)
     }
     try {
-      if (!this.state.managingRooms.length) {
+      if (!this.state.managingRooms.size) {
         return
       }
-      await Promise.all(this.state.managingRooms.map(room => room.dispose()))
+      await Promise.all(
+        Array.from(this.state.managingRooms.values()).map(room =>
+          room
+            .dispose()
+            .then()
+            .catch()
+        )
+      )
     } catch (e) {
       return
     } finally {
