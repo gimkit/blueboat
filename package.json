@@ -62,6 +62,7 @@
     "ioredis": "^4.6.2",
     "nanoid": "^2.0.1",
     "nonenumerable": "^1.1.1",
+    "notepack.io": "^2.2.0",
     "serialize-error": "^3.0.0",
     "sha.js": "^2.4.11",
     "socket.io": "^2.2.0",

@@ -1,5 +1,6 @@
 import Redis, { RedisOptions } from 'ioredis'
 import nanoid from 'nanoid'
+import msgpack from 'notepack.io'
 import PubSub from './PubSub'
 
 interface Callback {
@@ -13,7 +14,9 @@ const RedisPubsub = (options: RedisOptions) => {
 
   const listeners = new Map<string, Callback[]>()
 
-  redis.on('message', (key: string, data: any) => {
+  redis.on('messageBuffer', (k: Buffer, d: Buffer) => {
+    const key = k.toString('utf8')
+    const data = msgpack.decode(d).data
     const callbacks = listeners.get(key)
     if (callbacks && callbacks.length) {
       callbacks.forEach(callback => {
@@ -40,9 +43,9 @@ const RedisPubsub = (options: RedisOptions) => {
     return { unsubscribe: () => unsubscribe(key, id) }
   }
 
-  const publish = (key: string, data: string) => {
+  const publish = (key: string, data: any) => {
     pub
-      .publish(key, data)
+      .publish(key, msgpack.encode({ data }))
       .then()
       .catch()
     return
@@ -50,6 +53,9 @@ const RedisPubsub = (options: RedisOptions) => {
 
   const unsubscribe = (key: string, id: string) => {
     const listenersForKey = listeners.get(key)
+    if (!listenersForKey || !listenersForKey.length) {
+      return
+    }
     if (listenersForKey.length === 1) {
       redis
         .unsubscribe(key)

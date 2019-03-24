@@ -168,6 +168,7 @@ class Server {
     if (signal === 'uncaughtException' && reason) {
       console.log(reason)
     }
+    this.server.close()
     try {
       if (!this.state.managingRooms.size) {
         return
@@ -182,9 +183,6 @@ class Server {
       )
     } catch (e) {
       return
-    } finally {
-      this.server.close()
-      process.exit(0)
     }
   }
 }

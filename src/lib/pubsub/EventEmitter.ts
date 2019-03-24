@@ -33,6 +33,9 @@ const EventEmitter = () => {
 
   const unsubscribe = (key: string, id: string) => {
     const listenersForKey = listeners.get(key)
+    if (!listenersForKey || !listenersForKey.length) {
+      return
+    }
     if (listenersForKey.length === 1) {
       emitter.removeListener(key, listenersForKey[0].callback)
       listeners.delete(key)

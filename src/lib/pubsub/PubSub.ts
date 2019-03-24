@@ -1,8 +1,8 @@
 export type OnFunction = (
   key: string,
-  callback: (data: string) => any
+  callback: (data: any) => any
 ) => { unsubscribe: () => any }
-export type Publish = (key: string, data: string) => any
+export type Publish = (key: string, data: any) => any
 
 class PubSub {
   public on: OnFunction
