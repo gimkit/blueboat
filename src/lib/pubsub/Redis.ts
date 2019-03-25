@@ -1,6 +1,6 @@
 import Redis, { RedisOptions } from 'ioredis'
+import msgpack from 'msgpack-lite'
 import nanoid from 'nanoid'
-import msgpack from 'notepack.io'
 import PubSub from './PubSub'
 
 interface Callback {
@@ -45,6 +45,7 @@ const RedisPubsub = (options: RedisOptions) => {
 
   const publish = (key: string, data: any) => {
     pub
+      // @ts-ignore
       .publish(key, msgpack.encode({ data }))
       .then()
       .catch()
