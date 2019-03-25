@@ -12,14 +12,11 @@ const JoinRoom = async (
 ) => {
   try {
     await roomFetcher.findRoomById(roomId)
-    pubsub.publish(
-      roomId,
-      JSON.stringify({
-        action: ClientActions.joinRoom,
-        client,
-        data: { options }
-      })
-    )
+    pubsub.publish(roomId, {
+      action: ClientActions.joinRoom,
+      client,
+      data: { options }
+    })
     return
   } catch (e) {
     throw e
