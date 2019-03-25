@@ -1,5 +1,6 @@
 import EventEmitterPubSub from './lib/pubsub/EventEmitter'
 import PubSub from './lib/pubsub/PubSub'
+import RabbitMQPubSub from './lib/pubsub/RabbitMQ'
 import RedisPubSub from './lib/pubsub/Redis'
 import Client from './lib/room/Client'
 import Room from './lib/room/Room'
@@ -19,5 +20,6 @@ export {
   SimpleClient,
   PubSub,
   RedisPubSub,
-  EventEmitterPubSub
+  EventEmitterPubSub,
+  RabbitMQPubSub
 }
