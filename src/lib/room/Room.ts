@@ -122,7 +122,7 @@ class Room<State = any, StaticState = any> {
     this.state = newState
   }
 
-  public setStaticSetate = (newState: StaticState) => {
+  public setStaticState = (newState: StaticState) => {
     this.staticState = newState
   }
 
