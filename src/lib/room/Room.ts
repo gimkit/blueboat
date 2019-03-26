@@ -29,11 +29,16 @@ interface RoomOptions {
   roomType: string
 }
 
-class Room<State = any> {
+class Room<State = any, StaticState = any> {
   // Public values
 
   // @ts-ignore
   public state: State = {}
+  /**
+   * Used for game state values that don't need to be checked at every patch interval
+   */
+  // @ts-ignore
+  public staticState: StaticState = {}
   public initialGameValues: any = {}
   public roomId: string
   public clock = new Clock(true)
@@ -115,6 +120,10 @@ class Room<State = any> {
     this.stateContainer.set(JSON.parse(JSON.stringify(newState)))
     this._lastState = newState
     this.state = newState
+  }
+
+  public setStaticSetate = (newState: StaticState) => {
+    this.staticState = newState
   }
 
   public broadcast = (key: string, data?: any) => {
