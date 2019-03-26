@@ -37,6 +37,7 @@ ${BUNDLED_PANEL_JS.js}
 interface ServerArguments {
   app: Express.Application
   redisOptions: RedisOptions
+  useRedisSocketAdapter?: boolean
   pubsub: PubSub
   admins: any
   customRoomIdGenerator?: (roomName: string, options?: any) => string
@@ -75,7 +76,11 @@ class Server {
     this.roomFetcher = new RoomFetcher({ redis: this.redis })
     this.gameValues = new CustomGameValues({ redis: this.redis })
     this.customRoomIdGenerator = options.customRoomIdGenerator
-    this.spawnServer(options.redisOptions, options.admins || {})
+    this.spawnServer(
+      options.redisOptions,
+      options.useRedisSocketAdapter,
+      options.admins || {}
+    )
   }
 
   public registerRoom = (roomName: string, handler: any, options?: any) => {
@@ -100,7 +105,11 @@ class Server {
     this.state.managingRooms.delete(roomId)
   }
 
-  private spawnServer = (redisOptions: RedisOptions, adminUsers: any) => {
+  private spawnServer = (
+    redisOptions: RedisOptions,
+    useRedisSocketAdapter: boolean,
+    adminUsers: any
+  ) => {
     this.server = new HTTPServer(this.app)
     this.makeRoutes(adminUsers)
     this.listen = (port: number, callback?: () => void) => {
@@ -111,7 +120,9 @@ class Server {
       path: '/blueboat',
       transports: ['websocket']
     })
-    this.io.adapter(redisAdapter(redisOptions))
+    if (useRedisSocketAdapter) {
+      this.io.adapter(redisAdapter(redisOptions))
+    }
     this.io.attach(this.server)
     this.io.on('connection', s =>
       ConnectionHandler({
