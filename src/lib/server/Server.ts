@@ -176,10 +176,10 @@ class Server {
   }
 
   private shutdown = async (signal?: string, reason?: any) => {
+    console.log('shutting down')
     if (signal === 'uncaughtException' && reason) {
       console.log(reason)
     }
-    this.server.close()
     try {
       if (!this.state.managingRooms.size) {
         return
@@ -192,7 +192,11 @@ class Server {
             .catch()
         )
       )
+      this.io.close()
+      this.server.close()
     } catch (e) {
+      this.io.close()
+      this.server.close()
       return
     }
   }
