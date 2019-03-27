@@ -176,7 +176,6 @@ class Server {
   }
 
   private shutdown = async (signal?: string, reason?: any) => {
-    console.log('shutting down')
     if (signal === 'uncaughtException' && reason) {
       console.log(reason)
     }
