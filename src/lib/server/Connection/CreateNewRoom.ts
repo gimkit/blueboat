@@ -3,10 +3,10 @@ import { Server, Socket } from 'socket.io'
 import AvaiableRoomType from '../../../types/AvailableRoomType'
 import { RoomSnapshot } from '../../../types/RoomSnapshot'
 import SimpleClient from '../../../types/SimpleClient'
-import PubSub from '../../pubsub/PubSub';
+import PubSub from '../../pubsub/PubSub'
 import Room from '../../room/Room'
+import Storage from '../../storage/Storage'
 import CustomGameValues from '../CustomGameValues'
-import RedisClient from '../RedisClient'
 import RoomFetcher from '../RoomFetcher'
 
 const CreateNewRoom = async (
@@ -16,7 +16,7 @@ const CreateNewRoom = async (
   gameValues: CustomGameValues,
   pubsub: PubSub,
   socket: Socket,
-  redis: RedisClient,
+  storage: Storage,
   availableRooms: AvaiableRoomType[],
   onRoomDisposed: (roomId: string) => void,
   roomName: string,
@@ -31,10 +31,12 @@ const CreateNewRoom = async (
     }
     let roomId: string
     for (let i = 0; i < 3; i++) {
-      if (roomId) { break }
+      if (roomId) {
+        break
+      }
       const possibleRoomId = customRoomIdGenerator
-      ? customRoomIdGenerator(roomToCreate.name, roomToCreate.options)
-      : nanoid()
+        ? customRoomIdGenerator(roomToCreate.name, roomToCreate.options)
+        : nanoid()
       if (!existingRoomIds.includes(possibleRoomId)) {
         roomId = possibleRoomId
       }
@@ -48,7 +50,7 @@ const CreateNewRoom = async (
       pubsub,
       owner: client,
       roomId,
-      redis,
+      storage,
       creatorOptions,
       options: roomToCreate.options,
       ownerSocket: socket,

@@ -5,6 +5,9 @@ import RedisPubSub from './lib/pubsub/Redis'
 import Client from './lib/room/Client'
 import Room from './lib/room/Room'
 import Server from './lib/server/Server'
+import MemoryStorage from './lib/storage/Memory'
+import RedisStorage from './lib/storage/Redis'
+import Storage from './lib/storage/Storage'
 import SimpleClient from './types/SimpleClient'
 
 export interface EntityMap<T> {
@@ -21,5 +24,8 @@ export {
   PubSub,
   RedisPubSub,
   EventEmitterPubSub,
-  RabbitMQPubSub
+  RabbitMQPubSub,
+  Storage,
+  RedisStorage,
+  MemoryStorage
 }

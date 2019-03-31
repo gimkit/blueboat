@@ -1,29 +1,24 @@
 import { RoomSnapshot } from '../../types/RoomSnapshot'
 import { ROOM_PREFIX } from '../constants/RedisKeys'
-import RedisClient from './RedisClient'
+import Storage from '../storage/Storage'
 
 interface RoomFetcherOptions {
-  redis: RedisClient
+  storage: Storage
 }
 
 /**
  * Can help find a list of currently available Rooms and their snapshots
  */
 class RoomFetcher {
-  public redis: RedisClient = null
+  public storage: Storage = null
 
   constructor(options: RoomFetcherOptions) {
-    this.redis = options.redis
+    this.storage = options.storage
   }
 
   public getListOfRooms = async () => {
     try {
-      const fetchedRooms = await this.redis.fetchKeys(
-        this.redis.getKey(ROOM_PREFIX) + '*'
-      )
-      const rooms = fetchedRooms.map(room =>
-        room.replace(this.redis.getKey(ROOM_PREFIX), '')
-      )
+      const rooms = await this.storage.fetchKeys(ROOM_PREFIX)
       return rooms
     } catch (e) {
       throw e
@@ -36,7 +31,7 @@ class RoomFetcher {
       const rooms = await Promise.all(
         roomList.map(async r => {
           try {
-            const room = await this.redis.get(ROOM_PREFIX + r, true)
+            const room = await this.storage.get(ROOM_PREFIX + r, true)
             if (room) {
               return JSON.parse(room) as RoomSnapshot
             }
@@ -54,7 +49,7 @@ class RoomFetcher {
 
   public findRoomById = async (roomId: string) => {
     try {
-      const room = await this.redis.get(ROOM_PREFIX + roomId)
+      const room = await this.storage.get(ROOM_PREFIX + roomId)
       return JSON.parse(room)
     } catch (e) {
       throw e
@@ -64,7 +59,7 @@ class RoomFetcher {
   public setRoomMetadata = async (roomId: string, newMetadata: any) => {
     try {
       const room = await this.findRoomById(roomId)
-      await this.redis.set(
+      await this.storage.set(
         ROOM_PREFIX + room.id,
         JSON.stringify({ ...room, metadata: newMetadata })
       )
@@ -75,7 +70,7 @@ class RoomFetcher {
 
   public addRoom = async (room: RoomSnapshot) => {
     try {
-      await this.redis.set(ROOM_PREFIX + room.id, JSON.stringify(room))
+      await this.storage.set(ROOM_PREFIX + room.id, JSON.stringify(room))
     } catch (e) {
       throw e
     }
@@ -83,7 +78,7 @@ class RoomFetcher {
 
   public removeRoom = async (roomId: string) => {
     try {
-      await this.redis.remove(ROOM_PREFIX + roomId)
+      await this.storage.remove(ROOM_PREFIX + roomId)
     } catch (e) {
       throw e
     }

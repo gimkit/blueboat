@@ -1,12 +1,7 @@
 import cors from 'cors'
 import Express from 'express'
-import { EventEmitterPubSub, Server } from '../index'
+import { EventEmitterPubSub, MemoryStorage, Server } from '../index'
 import ChatRoom from './ChatRoom'
-
-const redisOptions = {
-  host: 'localhost',
-  port: 6379
-}
 
 const start = async () => {
   try {
@@ -15,8 +10,12 @@ const start = async () => {
     app.options('*', cors())
     const server = new Server({
       app,
-      redisOptions,
+      storage: MemoryStorage(),
       pubsub: EventEmitterPubSub(),
+      redis: {
+        host: 'localhost',
+        port: 6379
+      },
       admins: { blueboat: 'pass' }
     })
     server.registerRoom('Chat', ChatRoom)

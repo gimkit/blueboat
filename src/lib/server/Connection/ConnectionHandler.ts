@@ -8,8 +8,8 @@ import { PLAYER_LEFT } from '../../constants/PubSubListeners'
 import ServerActions from '../../constants/ServerActions'
 import PubSub from '../../pubsub/PubSub'
 import Room from '../../room/Room'
+import Storage from '../../storage/Storage'
 import CustomGameValues from '../CustomGameValues'
-import RedisClient from '../RedisClient'
 import RoomFetcher from '../RoomFetcher'
 import CreateNewRoom from './CreateNewRoom'
 import JoinRoom from './JoinRoom'
@@ -18,7 +18,7 @@ interface ConnectionHandlerOptions {
   io: Socket.Server
   socket: Socket.Socket
   pubsub: PubSub
-  redis: RedisClient
+  storage: Storage
   availableRoomTypes: AvaiableRoomType[]
   roomFetcher: RoomFetcher
   gameValues: CustomGameValues
@@ -31,7 +31,7 @@ const ConnectionHandler = (options: ConnectionHandlerOptions) => {
   const {
     io,
     socket,
-    redis,
+    storage,
     pubsub,
     availableRoomTypes,
     roomFetcher,
@@ -63,7 +63,7 @@ const ConnectionHandler = (options: ConnectionHandlerOptions) => {
           gameValues,
           pubsub,
           socket,
-          redis,
+          storage,
           availableRoomTypes,
           onRoomDisposed,
           request.type,

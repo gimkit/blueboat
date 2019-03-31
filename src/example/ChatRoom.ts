@@ -10,7 +10,11 @@ class ChatRoom extends Room<State> {
     )
   }
 
-  public async onMessage(client: Client, action: string, data?: any) {
+  public onJoin(client: Client) {
+    this.catchUp(client)
+  }
+
+  public onMessage(client: Client, action: string, data?: any) {
     if (!action) {
       return
     }
@@ -18,7 +22,7 @@ class ChatRoom extends Room<State> {
       client.send('LATENCY', data)
     }
     if (action === 'CHAT') {
-      this.state.messages.push({ message: data, senderId: client.id })
+      this.addMessage(data, client.id)
     }
   }
 
@@ -31,11 +35,17 @@ class ChatRoom extends Room<State> {
     if (reconneced) {
       return
     }
-    this.state.messages.push({
-      message: `${client.id} has left the room`,
-      senderId: 'Botsy'
-    })
+    this.addMessage(`${client.id} has left the room`, 'Botsy')
   }
+
+  private addMessage = (text: string, senderId: string) => {
+    const message = { message: text, senderId }
+    this.state.messages.push(message)
+    this.broadcast('MESSAGE', message)
+  }
+
+  private catchUp = (client: Client) =>
+    client.send('MESSAGES', this.state.messages)
 }
 
 export default ChatRoom

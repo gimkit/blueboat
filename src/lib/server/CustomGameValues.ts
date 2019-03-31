@@ -1,23 +1,23 @@
 import { GAME_VALUES } from '../constants/RedisKeys'
-import RedisClient from './RedisClient'
+import Storage from '../storage/Storage'
 
 interface CustomGameValueOptions {
-  redis: RedisClient
+  storage: Storage
 }
 
 /**
  * Used for global game values in which you can change in the admin panel
  */
 class CustomGameValues {
-  public redis: RedisClient = null
+  public storage: Storage = null
 
   constructor(options: CustomGameValueOptions) {
-    this.redis = options.redis
+    this.storage = options.storage
   }
 
   public setGlobalGameValuesObject = async (newGameValues: any) => {
     try {
-      await this.redis.set(GAME_VALUES, JSON.stringify(newGameValues), true)
+      await this.storage.set(GAME_VALUES, JSON.stringify(newGameValues), true)
     } catch (e) {
       throw e
     }
@@ -25,7 +25,7 @@ class CustomGameValues {
 
   public getGameValues = async (): Promise<any> => {
     try {
-      const gameValues = await this.redis.get(GAME_VALUES, true)
+      const gameValues = await this.storage.get(GAME_VALUES, true)
       if (gameValues) {
         return JSON.parse(gameValues)
       }
@@ -35,7 +35,7 @@ class CustomGameValues {
     }
   }
 
-  public getGameValue = async<T> (
+  public getGameValue = async <T>(
     key: string,
     defaultValue?: T
   ): Promise<T> => {
@@ -54,7 +54,7 @@ class CustomGameValues {
     try {
       const gameValues = await this.getGameValues()
       const newGameValues = { ...gameValues, [key]: value }
-      await this.redis.set(GAME_VALUES, JSON.stringify(newGameValues), true)
+      await this.storage.set(GAME_VALUES, JSON.stringify(newGameValues), true)
     } catch (e) {
       throw e
     }
@@ -62,7 +62,7 @@ class CustomGameValues {
 
   public resetGameValues = async () => {
     try {
-      await this.redis.set(GAME_VALUES, JSON.stringify({}), true)
+      await this.storage.set(GAME_VALUES, JSON.stringify({}), true)
     } catch (e) {
       throw e
     }

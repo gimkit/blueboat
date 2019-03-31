@@ -1,22 +1,20 @@
-import { StateContainer } from '@gamestdio/state-listener'
-import Clock, { Delayed } from '@gamestdio/timer'
+import Clock from '@gamestdio/timer'
 import { Server, Socket } from 'socket.io'
 import SimpleClient from '../../types/SimpleClient'
 import ClientActions from '../constants/ClientActions'
 import { PLAYER_LEFT, REQUEST_INFO } from '../constants/PubSubListeners'
-import { ROOM_STATE_PATCH_RATE } from '../constants/RoomConfig'
 import ServerActions from '../constants/ServerActions'
 import PubSub, { OnFunction } from '../pubsub/PubSub'
 import CustomGameValues from '../server/CustomGameValues'
 import Emitter from '../server/Emitter'
-import RedisClient from '../server/RedisClient'
 import RoomFetcher from '../server/RoomFetcher'
+import Storage from '../storage/Storage'
 import Client from './Client'
 
 interface RoomOptions {
   io: Server
   roomId: string
-  redis: RedisClient
+  storage: Storage
   pubsub: PubSub
   owner: SimpleClient
   ownerSocket: Socket
@@ -29,7 +27,7 @@ interface RoomOptions {
   roomType: string
 }
 
-class Room<State = any, StaticState = any> {
+class Room<State = any> {
   // Public values
 
   // @ts-ignore
@@ -38,12 +36,11 @@ class Room<State = any, StaticState = any> {
    * Used for game state values that don't need to be checked at every patch interval
    */
   // @ts-ignore
-  public staticState: StaticState = {}
+  public staticState = {}
   public initialGameValues: any = {}
   public roomId: string
   public clock = new Clock(true)
   public clients: Client[] = []
-  public patchRate = ROOM_STATE_PATCH_RATE
   public options = {} as any
   public creatorOptions = {} as any
   public metadata: any
@@ -55,16 +52,13 @@ class Room<State = any, StaticState = any> {
   private io: Server
 
   private pubsub: PubSub
-  private stateContainer = new StateContainer({})
   // @ts-ignore
-  private redis: RedisClient
+  private storage: Storage
   // @ts-ignore
   private ownerSocket: Socket
   private onRoomDisposed: (roomId: string) => void
   private roomFetcher: RoomFetcher
-  private gameHostIsConnected = true
   /* tslint:disable */
-  private _patchInterval: Delayed
   private _gameMessagePubsub: ReturnType<OnFunction>
   private _playerPubsub: any
   // @ts-ignore
@@ -75,7 +69,7 @@ class Room<State = any, StaticState = any> {
     this.roomId = options.roomId
     this.io = options.io
     this.pubsub = options.pubsub
-    this.redis = options.redis
+    this.storage = options.storage
     this.owner = options.owner
     this.ownerSocket = options.ownerSocket
     this.onRoomDisposed = options.onRoomDisposed
@@ -93,7 +87,6 @@ class Room<State = any, StaticState = any> {
     if (this.onCreate) {
       this.onCreate(options.options)
     }
-    this.clock.setInterval(this.checkIfGameHostIsConnected, 10000)
     // Dispose room automatically in 2.5 hours
     this.clock.setTimeout(
       () =>
@@ -117,34 +110,11 @@ class Room<State = any, StaticState = any> {
   public onDispose?(): void
 
   public setState = (newState: State) => {
-    this.stateContainer.set(JSON.parse(JSON.stringify(newState)))
-    this._lastState = newState
     this.state = newState
-  }
-
-  public setStaticState = (newState: StaticState) => {
-    this.staticState = newState
   }
 
   public broadcast = (key: string, data?: any) => {
     this.clients.forEach(client => client.send(key, data))
-  }
-
-  public setPatchRate = (patchRateInMilliseconds: number) => {
-    if (!patchRateInMilliseconds) {
-      return
-    }
-    this.patchRate = patchRateInMilliseconds
-    if (this._patchInterval) {
-      if (this._patchInterval) {
-        this._patchInterval.clear()
-        this._patchInterval = undefined
-      }
-    }
-    this._patchInterval = this.clock.setInterval(
-      this._sendNewPatch,
-      patchRateInMilliseconds
-    )
   }
 
   public setMetadata = (newMetadata: any) => {
@@ -185,46 +155,8 @@ class Room<State = any, StaticState = any> {
     })
   }
 
-  private checkIfGameHostIsConnected = () => {
-    if (!this.gameHostIsConnected) {
-      this.dispose()
-        .then()
-        .catch()
-      return
-    }
-    this.gameHostIsConnected = false
-    return
-  }
-
-  private listen = (client: Client, change: string) => {
-    this.stateContainer.listen(
-      change,
-      dataChange => {
-        if (this.clientExists(client.sessionId)) {
-          client.send(ServerActions.statePatch, { change, patch: dataChange })
-        }
-      },
-      true
-    )
-  }
-
-  private clientExists = (sessionId: string) =>
-    this.clients.map(c => c.sessionId).includes(sessionId)
-
-  // tslint:disable-next-line
-  private _sendNewPatch = () => {
-    if (this.beforePatch) {
-      this.beforePatch(this._lastState)
-    }
-    this.stateContainer.set(JSON.parse(JSON.stringify(this.state)))
-    if (this.afterPatch) {
-      this.afterPatch(this._lastState)
-    }
-    this._lastState = JSON.parse(JSON.stringify(this.state))
-  }
-
   private onRoomCreated = () => {
-    this.setPatchRate(this.patchRate)
+    //
   }
 
   private findFullClientFromSimpleClient = (simpleClient: SimpleClient) => {
@@ -328,14 +260,6 @@ class Room<State = any, StaticState = any> {
           c => c.sessionId === payload.client.sessionId
         )[0]
         if (!roomClient) {
-          return
-        }
-        if (payload.data.key === ClientActions.listen) {
-          this.listen(roomClient, payload.data.data)
-          return
-        }
-        if (payload.data.key === ClientActions.ping) {
-          this.gameHostIsConnected = true
           return
         }
         if (this.onMessage) {

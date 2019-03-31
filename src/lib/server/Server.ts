@@ -5,7 +5,7 @@ import { Server as HTTPServer } from 'http'
 import { RedisOptions } from 'ioredis'
 import socket from 'socket.io'
 import MessagePackParser from 'socket.io-msgpack-parser'
-import redisAdapter from 'socket.io-redis'
+import { RedisStorage } from '../..'
 import AvaiableRoomType from '../../types/AvailableRoomType'
 import GetGameValues from '../api/GetGameValues'
 import GetRoom from '../api/GetRoom'
@@ -15,10 +15,10 @@ import { PLAYER_LEFT } from '../constants/PubSubListeners'
 import BUNDLED_PANEL_JS from '../panel/bundle'
 import PubSub from '../pubsub/PubSub'
 import Room from '../room/Room'
+import Storage from '../storage/Storage'
 import ConnectionHandler from './Connection/ConnectionHandler'
 import CustomGameValues from './CustomGameValues'
 import Emitter from './Emitter'
-import RedisClient from './RedisClient'
 import RoomFetcher from './RoomFetcher'
 
 const PANEL_PREFIX = '/blueboat-panel'
@@ -36,10 +36,11 @@ ${BUNDLED_PANEL_JS.js}
 
 interface ServerArguments {
   app: Express.Application
-  redisOptions: RedisOptions
-  useRedisSocketAdapter?: boolean
+  storage: Storage
   pubsub: PubSub
+  redis: RedisOptions
   admins: any
+  adapters?: SocketIO.Adapter[]
   customRoomIdGenerator?: (roomName: string, options?: any) => string
 }
 
@@ -52,7 +53,7 @@ const signals = ['SIGINT', 'SIGTERM', 'SIGUSR2', 'uncaughtException']
 
 class Server {
   public server: HTTPServer = null
-  public redis: RedisClient = null
+  public storage: Storage = null
   public gameValues: CustomGameValues
 
   public state: ServerState = {
@@ -68,19 +69,15 @@ class Server {
 
   constructor(options: ServerArguments) {
     this.app = options.app
-    this.redis = new RedisClient({
-      clientOptions: options.redisOptions as any
-    })
+    this.storage = options.storage
     // @ts-ignore
     this.pubsub = options.pubsub
-    this.roomFetcher = new RoomFetcher({ redis: this.redis })
-    this.gameValues = new CustomGameValues({ redis: this.redis })
+    this.roomFetcher = new RoomFetcher({ storage: this.storage })
+    this.gameValues = new CustomGameValues({
+      storage: RedisStorage({ clientOptions: options.redis })
+    })
     this.customRoomIdGenerator = options.customRoomIdGenerator
-    this.spawnServer(
-      options.redisOptions,
-      options.useRedisSocketAdapter,
-      options.admins || {}
-    )
+    this.spawnServer(options)
   }
 
   public registerRoom = (roomName: string, handler: any, options?: any) => {
@@ -105,13 +102,9 @@ class Server {
     this.state.managingRooms.delete(roomId)
   }
 
-  private spawnServer = (
-    redisOptions: RedisOptions,
-    useRedisSocketAdapter: boolean,
-    adminUsers: any
-  ) => {
+  private spawnServer = (options: ServerArguments) => {
     this.server = new HTTPServer(this.app)
-    this.makeRoutes(adminUsers)
+    this.makeRoutes(options.admins)
     this.listen = (port: number, callback?: () => void) => {
       this.server.listen(port, callback)
     }
@@ -120,8 +113,8 @@ class Server {
       path: '/blueboat',
       transports: ['websocket']
     })
-    if (useRedisSocketAdapter) {
-      this.io.adapter(redisAdapter(redisOptions))
+    if (options.adapters && options.adapters.length) {
+      options.adapters.forEach(adapter => this.io.adapter(adapter))
     }
     this.io.attach(this.server)
     this.io.on('connection', s =>
@@ -129,7 +122,7 @@ class Server {
         availableRoomTypes: this.state.availableRoomTypes,
         io: this.io,
         pubsub: this.pubsub,
-        redis: this.redis,
+        storage: this.storage,
         roomFetcher: this.roomFetcher,
         gameValues: this.gameValues,
         socket: s,
