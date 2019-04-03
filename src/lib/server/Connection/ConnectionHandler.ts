@@ -9,6 +9,7 @@ import ServerActions from '../../constants/ServerActions'
 import PubSub from '../../pubsub/PubSub'
 import Room from '../../room/Room'
 import Storage from '../../storage/Storage'
+import Logger, { LoggerTypes } from '../../utils/Logger'
 import CustomGameValues from '../CustomGameValues'
 import RoomFetcher from '../RoomFetcher'
 import CreateNewRoom from './CreateNewRoom'
@@ -56,6 +57,10 @@ const ConnectionHandler = (options: ConnectionHandlerOptions) => {
         if (!request || !request.type || !request.uniqueRequestId) {
           throw new Error('Room type needed')
         }
+        Logger(
+          `${socket.id} trying to create a new ${request.type} room`,
+          LoggerTypes.io
+        )
         const room = await CreateNewRoom(
           client,
           io,
@@ -73,11 +78,17 @@ const ConnectionHandler = (options: ConnectionHandlerOptions) => {
           request.options,
           customRoomIdGenerator
         )
+        Logger(`${room.roomId} made`, LoggerTypes.room)
         onRoomMade(room)
 
         socket.emit(`${request.uniqueRequestId}-create`, room.roomId)
       } catch (e) {
-        socket.emit(`${request.uniqueRequestId}-error`, serializeError(e))
+        const error = serializeError(e)
+        Logger(
+          `${socket.id} error creating room - ${JSON.stringify(error)}`,
+          LoggerTypes.room
+        )
+        socket.emit(`${request.uniqueRequestId}-error`, error)
       }
     }
   )
@@ -90,10 +101,19 @@ const ConnectionHandler = (options: ConnectionHandlerOptions) => {
         if (!roomId) {
           throw new Error('Room ID not provided')
         }
+        Logger(`${socket.id} trying to join ${roomId} room`, LoggerTypes.io)
         await JoinRoom(roomId, client, roomFetcher, pubsub, payload.options)
+        Logger(`${socket.id} joined ${roomId} room`, LoggerTypes.io)
       } catch (e) {
         if (payload && payload.roomId) {
-          socket.emit(`${payload.roomId}-error`, serializeError(e))
+          const error = serializeError(e)
+          Logger(
+            `${socket.id} error joining room ${
+              payload.roomId
+            } - ${JSON.stringify(error)}`,
+            LoggerTypes.room
+          )
+          socket.emit(`${payload.roomId}-error`, error)
         }
       }
     }
@@ -105,6 +125,10 @@ const ConnectionHandler = (options: ConnectionHandlerOptions) => {
       if (message.key === undefined || !message.room) {
         return
       }
+      Logger(
+        `${socket.id} - message - ${JSON.stringify(message)}`,
+        LoggerTypes.io
+      )
       pubsub.publish(message.room, {
         client,
         action: ClientActions.sendMessage,

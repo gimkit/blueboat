@@ -215,11 +215,9 @@ class Room<State = any> {
     if (this.onLeave) {
       await this.onLeave(client, intentional)
     }
-    if (client.sessionId === this.owner.sessionId) {
+    if (!this.clients || !this.clients.length) {
       this.dispose()
-        .then(() =>
-          this.clients.forEach(c => this.removeClient(c.sessionId, false))
-        )
+        .then()
         .catch()
     }
   }

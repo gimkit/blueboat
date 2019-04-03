@@ -16,6 +16,7 @@ import BUNDLED_PANEL_JS from '../panel/bundle'
 import PubSub from '../pubsub/PubSub'
 import Room from '../room/Room'
 import Storage from '../storage/Storage'
+import Logger, { LoggerTypes } from '../utils/Logger'
 import ConnectionHandler from './Connection/ConnectionHandler'
 import CustomGameValues from './CustomGameValues'
 import Emitter from './Emitter'
@@ -99,14 +100,17 @@ class Server {
     this.state.managingRooms.set(room.roomId, room)
   }
   private onRoomDisposed = (roomId: string) => {
+    Logger(`${roomId} disposed`, LoggerTypes.room)
     this.state.managingRooms.delete(roomId)
   }
 
   private spawnServer = (options: ServerArguments) => {
+    Logger('Spawning server...', LoggerTypes.server)
     this.server = new HTTPServer(this.app)
     this.makeRoutes(options.admins)
     this.listen = (port: number, callback?: () => void) => {
       this.server.listen(port, callback)
+      Logger('Server listening on port ' + port, LoggerTypes.server)
     }
     this.io = socket({
       parser: MessagePackParser,
@@ -117,7 +121,8 @@ class Server {
       options.adapters.forEach(adapter => this.io.adapter(adapter))
     }
     this.io.attach(this.server)
-    this.io.on('connection', s =>
+    this.io.on('connection', s => {
+      Logger(s.id + ' connected', LoggerTypes.io)
       ConnectionHandler({
         availableRoomTypes: this.state.availableRoomTypes,
         io: this.io,
@@ -130,7 +135,7 @@ class Server {
         onRoomDisposed: this.onRoomDisposed,
         customRoomIdGenerator: this.customRoomIdGenerator
       })
-    )
+    })
 
     this.spawnPubSub()
 
@@ -176,6 +181,7 @@ class Server {
       if (!this.state.managingRooms.size) {
         return
       }
+
       await Promise.all(
         Array.from(this.state.managingRooms.values()).map(room =>
           room
@@ -184,9 +190,11 @@ class Server {
             .catch()
         )
       )
+      Logger('Server closing...', LoggerTypes.server)
       this.io.close()
       this.server.close()
     } catch (e) {
+      Logger('Server closing...', LoggerTypes.server)
       this.io.close()
       this.server.close()
       return
