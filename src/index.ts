@@ -1,4 +1,5 @@
 import EventEmitterPubSub from './lib/pubsub/EventEmitter'
+import * as EventEmitterClusterPubsub from './lib/pubsub/EventEmitterCluster'
 import PubSub from './lib/pubsub/PubSub'
 import RabbitMQPubSub from './lib/pubsub/RabbitMQ'
 import RedisPubSub from './lib/pubsub/Redis'
@@ -27,5 +28,6 @@ export {
   RabbitMQPubSub,
   Storage,
   RedisStorage,
-  MemoryStorage
+  MemoryStorage,
+  EventEmitterClusterPubsub
 }

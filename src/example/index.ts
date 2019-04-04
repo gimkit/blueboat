@@ -1,7 +1,12 @@
 import cors from 'cors'
 import Express from 'express'
-import { EventEmitterPubSub, MemoryStorage, Server } from '../index'
+import { EventEmitterClusterPubsub, RedisStorage, Server } from '../index'
 import ChatRoom from './ChatRoom'
+
+const redisOptions = {
+  host: 'localhost',
+  port: 6379
+}
 
 const start = async () => {
   try {
@@ -10,12 +15,12 @@ const start = async () => {
     app.options('*', cors())
     const server = new Server({
       app,
-      storage: MemoryStorage(),
-      pubsub: EventEmitterPubSub(),
-      redis: {
-        host: 'localhost',
-        port: 6379
-      },
+      storage: RedisStorage({
+        clientOptions: redisOptions
+      }),
+      pubsub: EventEmitterClusterPubsub.PubSub(),
+      redis: redisOptions,
+      adapters: [EventEmitterClusterPubsub.ClusterAdapter()],
       admins: { blueboat: 'pass' }
     })
     server.registerRoom('Chat', ChatRoom)
@@ -25,4 +30,4 @@ const start = async () => {
   }
 }
 
-start()
+EventEmitterClusterPubsub.ProcessStarter(start, 2)

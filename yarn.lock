@@ -1848,7 +1848,7 @@ debug@2.6.9, debug@^2.1.2, debug@^2.2.0, debug@^2.3.3, debug@~2.6.9:
   dependencies:
     ms "2.0.0"
 
-debug@^3.1.0:
+debug@^3.0.0, debug@^3.1.0:
   version "3.2.6"
   resolved "https://registry.yarnpkg.com/debug/-/debug-3.2.6.tgz#e83d17de16d8a7efb7717edbe5fb10135eee629b"
   integrity sha512-mel+jf7nrtEl5Pn1Qx46zARXKDpBbvzezse7p7LqINmdoIk8PYP5SySaxEmYv6TZ0JyEKA1hsCId6DIhgITtWQ==
@@ -5343,7 +5343,15 @@ snapdragon@^0.8.1:
     source-map-resolve "^0.5.0"
     use "^3.1.0"
 
-socket.io-adapter@~1.1.0:
+socket.io-adapter-cluster@^1.0.1:
+  version "1.0.1"
+  resolved "https://registry.yarnpkg.com/socket.io-adapter-cluster/-/socket.io-adapter-cluster-1.0.1.tgz#bf7cd8f580a1e8e9c00d147db52a995de06ce8bf"
+  integrity sha512-6sEtQwDjsEQ/c5ZX4avdb+PH2HWS26GNczeqB5J42QZQCzZnIhQAsQIzRa6SbdN10nidueLj+xJs4mLGmjuKvA==
+  dependencies:
+    debug "^3.0.0"
+    socket.io-adapter "^1.1.0"
+
+socket.io-adapter@^1.1.0, socket.io-adapter@~1.1.0:
   version "1.1.1"
   resolved "https://registry.yarnpkg.com/socket.io-adapter/-/socket.io-adapter-1.1.1.tgz#2a805e8a14d6372124dd9159ad4502f8cb07f06b"
   integrity sha1-KoBeihTWNyEk3ZFZrUUC+MsH8Gs=
