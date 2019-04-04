@@ -1,6 +1,10 @@
 import cors from 'cors'
 import Express from 'express'
-import { EventEmitterClusterPubsub, RedisStorage, Server } from '../index'
+import {
+  ClusterMemoryStorage,
+  EventEmitterClusterPubsub,
+  Server
+} from '../index'
 import ChatRoom from './ChatRoom'
 
 const redisOptions = {
@@ -15,9 +19,7 @@ const start = async () => {
     app.options('*', cors())
     const server = new Server({
       app,
-      storage: RedisStorage({
-        clientOptions: redisOptions
-      }),
+      storage: ClusterMemoryStorage(),
       pubsub: EventEmitterClusterPubsub.PubSub(),
       redis: redisOptions,
       adapters: [EventEmitterClusterPubsub.ClusterAdapter()],
