@@ -72,9 +72,7 @@ const ConnectionHandler = (options: ConnectionHandlerOptions) => {
           availableRoomTypes,
           onRoomDisposed,
           request.type,
-          process.env.BLUEBOAT_UNIQUE_CHECK
-            ? await roomFetcher.getListOfRooms()
-            : [],
+          await roomFetcher.getListOfRooms(),
           request.options,
           customRoomIdGenerator
         )
