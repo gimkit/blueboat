@@ -131,7 +131,9 @@ class Room<State = any> {
       }
       this.clock.stop()
       await this.roomFetcher.removeRoom(this.roomId)
-      this._gameMessagePubsub.unsubscribe()
+      if (this._gameMessagePubsub && this._gameMessagePubsub.unsubscribe) {
+        this._gameMessagePubsub.unsubscribe()
+      }
       Emitter.removeListener(PLAYER_LEFT, this._playerPubsub)
       if (this.onDispose) {
         await this.onDispose()
