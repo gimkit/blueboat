@@ -17,7 +17,9 @@ class CustomGameValues {
 
   public setGlobalGameValuesObject = async (newGameValues: any) => {
     try {
-      await this.storage.set(GAME_VALUES, JSON.stringify(newGameValues), true)
+      await this.storage.set(GAME_VALUES, JSON.stringify(newGameValues), {
+        noExpiration: true
+      })
     } catch (e) {
       throw e
     }

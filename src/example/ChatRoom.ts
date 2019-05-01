@@ -8,6 +8,7 @@ class ChatRoom extends Room<State> {
         this.initialGameValues.initialBotMessage || 'Welcome to the chat!'
       )
     )
+    this.clock.setTimeout(() => this.dispose().catch(), 5000)
   }
 
   public onJoin(client: Client) {

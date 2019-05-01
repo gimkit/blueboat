@@ -32,11 +32,6 @@ class Room<State = any> {
 
   // @ts-ignore
   public state: State = {}
-  /**
-   * Used for game state values that don't need to be checked at every patch interval
-   */
-  // @ts-ignore
-  public staticState = {}
   public initialGameValues: any = {}
   public roomId: string
   public clock = new Clock(true)
@@ -126,6 +121,9 @@ class Room<State = any> {
 
   public dispose = async () => {
     try {
+      await Promise.all(
+        this.clients.map(client => this.removeClient(client.sessionId, true))
+      )
       if (this.beforeDispose) {
         await this.beforeDispose()
       }
