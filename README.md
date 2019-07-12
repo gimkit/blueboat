@@ -46,7 +46,26 @@ Blueboat comes with Typescript definitions already so need to install those!
 * [Documentation Home (Client)](https://github.com/gimkit/blueboat-client/wiki)
   * [Client API](https://github.com/gimkit/blueboat-client/wiki/Client-API)
   * [Room API](https://github.com/gimkit/blueboat-client/wiki/Room-API)
+  
+  
 
+### Admin Tool
+When running your server, you can visit an admin panel, but going to `/blueboat-panel`
+
+**View List Of Rooms**
+
+By default, you can see the list of rooms currently active in your server.
+
+<img src='https://i.imgur.com/xOEYJ07.png' />
+
+** View Room **
+Click into a room to see the list of clients and the room's state
+<img src='https://i.imgur.com/dv9XMDM.png' />
+
+** Change Game Values**
+Use Blueboat's game values tab to quickly change game values. Super useful to easily make balance adjustments or enable/disable game features. Here's an example of a simple chat application that gets a message from a bot when you create a room:
+
+<img src='https://i.imgur.com/mPleH93.gif' />
 
 
 ### Inspirations
