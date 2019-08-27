@@ -1,5 +1,6 @@
 import ampq from 'amqplib'
 import msgpack from 'msgpack-lite'
+// @ts-ignore
 import nanoid = require('nanoid')
 import { PubSub } from '../..'
 
