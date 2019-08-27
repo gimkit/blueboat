@@ -1,6 +1,6 @@
 {
   "name": "blueboat",
-  "version": "0.1.112",
+  "version": "0.1.114",
   "description": "Game server backend for NodeJS",
   "main": "build/main/index.js",
   "typings": "build/main/index.d.ts",
