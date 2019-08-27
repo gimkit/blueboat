@@ -21,13 +21,17 @@ export const ProcessStarter = (startFunction: any, numberOfWorkers: number) => {
     startFunction()
   }
   if (cluster.isMaster) {
-    const workers = []
+    const workers = [] as cluster.Worker[]
     for (let i = 0; i < numberOfWorkers; i++) {
       const worker = cluster.fork()
       workers.push(worker)
       worker.on('message', message => {
         if (message.key) {
-          workers.forEach(w => w.send(message))
+          workers.forEach(w => {
+            if (w.isConnected) {
+              w.send(message)
+            }
+          })
         }
       })
     }
