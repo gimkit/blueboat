@@ -1,10 +1,6 @@
 import cors from 'cors'
 import Express from 'express'
-import {
-  ClusterMemoryStorage,
-  EventEmitterClusterPubsub,
-  Server
-} from '../index'
+import { EventEmitterPubSub, MemoryStorage, Server } from '../index'
 import ChatRoom from './ChatRoom'
 
 const redisOptions = {
@@ -19,17 +15,18 @@ const start = async () => {
     app.options('*', cors())
     const server = new Server({
       app,
-      storage: ClusterMemoryStorage(),
-      pubsub: EventEmitterClusterPubsub.PubSub(),
+      storage: MemoryStorage(),
+      pubsub: EventEmitterPubSub(),
       redis: redisOptions,
-      adapters: [EventEmitterClusterPubsub.ClusterAdapter()],
       admins: { blueboat: 'pass' }
     })
     server.registerRoom('Chat', ChatRoom)
-    server.listen(4000, () => console.log('Server listening on port 4000'))
+    server.listen(4000, () => {
+      console.log('Server listening on port 4000')
+    })
   } catch (e) {
     console.log(e)
   }
 }
 
-EventEmitterClusterPubsub.ProcessStarter(start, 2)
+start()
