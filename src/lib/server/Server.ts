@@ -91,6 +91,36 @@ class Server {
     return
   }
 
+  public getRoomCount = async () => {
+    try {
+      const rooms = await this.roomFetcher.getListOfRooms()
+      return rooms.length
+    } catch (e) {
+      throw e
+    }
+  }
+
+  public getRooms = async () => {
+    try {
+      const rooms = await this.roomFetcher.getListOfRoomsWithData()
+      return rooms
+    } catch (e) {
+      throw e
+    }
+  }
+
+  public getNumberOfConnectedClients: () => Promise<number> = () => {
+    return new Promise(resolve => {
+      this.io.of('/').clients((error, clients) => {
+        if (!error) {
+          resolve(clients.length)
+        } else {
+          resolve(0)
+        }
+      })
+    })
+  }
+
   public gracefullyShutdown = () =>
     this.shutdown()
       .then()
