@@ -211,7 +211,6 @@ class Server {
       if (!this.state.managingRooms.size) {
         return
       }
-
       await Promise.all(
         Array.from(this.state.managingRooms.values()).map(room =>
           room

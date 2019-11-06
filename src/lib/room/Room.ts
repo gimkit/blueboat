@@ -53,6 +53,7 @@ class Room<State = any> {
   private ownerSocket: Socket
   private onRoomDisposed: (roomId: string) => void
   private roomFetcher: RoomFetcher
+  private disposing: boolean = false
   /* tslint:disable */
   private _gameMessagePubsub: ReturnType<OnFunction>
   private _playerPubsub: any
@@ -120,6 +121,8 @@ class Room<State = any> {
   }
 
   public dispose = async () => {
+    if (this.disposing) { return }
+    this.disposing = true
     try {
       await Promise.all(
         this.clients.map(client => this.removeClient(client.sessionId, true))
