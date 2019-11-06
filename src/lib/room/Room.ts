@@ -103,7 +103,7 @@ class Room<State = any> {
   public beforePatch?(lastState: State): void
   public afterPatch?(lastState: State): void
   public beforeDispose?(): Promise<void>
-  public onDispose?(): void
+  public onDispose?(): Promise<void>
 
   public setState = (newState: State) => {
     this.state = newState

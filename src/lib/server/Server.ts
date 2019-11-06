@@ -43,6 +43,7 @@ interface ServerArguments {
   admins: any
   adapters?: SocketIO.Adapter[]
   customRoomIdGenerator?: (roomName: string, options?: any) => string
+  onDispose?: () => Promise<any>
 }
 
 interface ServerState {
@@ -62,6 +63,8 @@ class Server {
     managingRooms: new Map()
   }
   public listen: (port: number, callback?: () => void) => void = null
+
+  private initialOptions: ServerArguments = null
   private app: Express.Application = null
   private io: SocketIO.Server = null
   private pubsub: PubSub
@@ -69,6 +72,7 @@ class Server {
   private customRoomIdGenerator = null
 
   constructor(options: ServerArguments) {
+    this.initialOptions = options
     this.app = options.app
     this.storage = options.storage
     // @ts-ignore
@@ -208,17 +212,19 @@ class Server {
       console.log(reason)
     }
     try {
-      if (!this.state.managingRooms.size) {
-        return
-      }
-      await Promise.all(
-        Array.from(this.state.managingRooms.values()).map(room =>
-          room
-            .dispose()
-            .then()
-            .catch()
+      if (this.state.managingRooms.size) {
+        await Promise.all(
+          Array.from(this.state.managingRooms.values()).map(room =>
+            room
+              .dispose()
+              .then()
+              .catch()
+          )
         )
-      )
+      }
+      if (this.initialOptions && this.initialOptions.onDispose) {
+        await this.initialOptions.onDispose()
+      }
       Logger('Server closing...', LoggerTypes.server)
       this.io.close()
       this.server.close()
