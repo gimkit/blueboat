@@ -1,4 +1,3 @@
-import Clock from '@gamestdio/timer'
 import { Server, Socket } from 'socket.io'
 import SimpleClient from '../../types/SimpleClient'
 import ClientActions from '../constants/ClientActions'
@@ -10,6 +9,7 @@ import Emitter from '../server/Emitter'
 import RoomFetcher from '../server/RoomFetcher'
 import Storage from '../storage/Storage'
 import Client from './Client'
+import Clock from './Clock'
 
 interface RoomOptions {
   io: Server
@@ -28,13 +28,17 @@ interface RoomOptions {
 }
 
 class Room<State = any> {
+  // tslint:disable-next-line:variable-name
+  public _internalClock = new Clock()
+
   // Public values
 
   // @ts-ignore
   public state: State = {}
   public initialGameValues: any = {}
   public roomId: string
-  public clock = new Clock(true)
+  public clock = this._internalClock.clock
+  public schedule = { at: this._internalClock.at }
   public clients: Client[] = []
   public options = {} as any
   public creatorOptions = {} as any
@@ -121,7 +125,9 @@ class Room<State = any> {
   }
 
   public dispose = async () => {
-    if (this.disposing) { return }
+    if (this.disposing) {
+      return
+    }
     this.disposing = true
     try {
       await Promise.all(
