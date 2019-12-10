@@ -20,9 +20,11 @@ const EventEmitter = () => {
       listeners.set(key, [{ id, callback }])
     } else {
       const currentListeners = listeners.get(key)
-      // @ts-ignore
-      const newListeners: Callback[] = currentListeners.push({ id, callback })
-      listeners.set(key, newListeners)
+      if (currentListeners && currentListeners.push) {
+        // @ts-ignore
+        const newListeners: Callback[] = currentListeners.push({ id, callback })
+        listeners.set(key, newListeners)
+      }
     }
     return { unsubscribe: () => unsubscribe(key, id) }
   }
