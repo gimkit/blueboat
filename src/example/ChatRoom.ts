@@ -8,6 +8,8 @@ class ChatRoom extends Room<State> {
         this.initialGameValues.initialBotMessage || 'Welcome to the chat!'
       )
     )
+    // @ts-ignore
+    this.clock.setTimeout(() => this.fudge.call(), 1000)
   }
 
   public onJoin(client: Client) {

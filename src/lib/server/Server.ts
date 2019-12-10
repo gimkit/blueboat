@@ -44,6 +44,7 @@ interface ServerArguments {
   adapters?: SocketIO.Adapter[]
   customRoomIdGenerator?: (roomName: string, options?: any) => string
   onDispose?: () => Promise<any>
+  onError?: (code: string, reason?: any) => void
 }
 
 interface ServerState {
@@ -70,6 +71,7 @@ class Server {
   private pubsub: PubSub
   private roomFetcher: RoomFetcher = null
   private customRoomIdGenerator = null
+  private onError = null as (code: string, reason?: any) => void
 
   constructor(options: ServerArguments) {
     this.initialOptions = options
@@ -82,6 +84,9 @@ class Server {
       storage: RedisStorage({ clientOptions: options.redis })
     })
     this.customRoomIdGenerator = options.customRoomIdGenerator
+    if (options.onError) {
+      this.onError = options.onError
+    }
     this.spawnServer(options)
   }
 
@@ -148,8 +153,7 @@ class Server {
     }
     this.io = socket({
       parser: MessagePackParser,
-      path: '/blueboat',
-      transports: ['websocket']
+      path: '/blueboat'
     })
     if (options.adapters && options.adapters.length) {
       options.adapters.forEach(adapter => this.io.adapter(adapter))
@@ -208,9 +212,13 @@ class Server {
   }
 
   private shutdown = async (signal?: string, reason?: any) => {
+    if (this.onError) {
+      this.onError(signal, reason)
+    }
     if (signal === 'uncaughtException' && reason) {
       console.log(reason)
     }
+
     try {
       if (this.state.managingRooms.size) {
         await Promise.all(
