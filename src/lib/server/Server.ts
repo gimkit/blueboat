@@ -42,7 +42,11 @@ interface ServerArguments {
   redis: RedisOptions
   admins: any
   adapters?: SocketIO.Adapter[]
-  customRoomIdGenerator?: (roomName: string, options?: any) => string
+  customRoomIdGenerator?: (
+    roomName: string,
+    roomOptions?: any,
+    creatorOptions?: any
+  ) => string
   onDispose?: () => Promise<any>
   onError?: (code: string, reason?: any) => void
 }

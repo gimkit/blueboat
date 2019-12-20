@@ -22,7 +22,11 @@ const CreateNewRoom = async (
   roomName: string,
   existingRoomIds: string[],
   creatorOptions: any,
-  customRoomIdGenerator?: (roomName: string, options?: any) => string
+  customRoomIdGenerator?: (
+    roomName: string,
+    roomOptions?: any,
+    creatorOptions?: any
+  ) => string
 ) => {
   try {
     const roomToCreate = availableRooms.filter(r => r.name === roomName)[0]
@@ -35,7 +39,11 @@ const CreateNewRoom = async (
         break
       }
       const possibleRoomId = customRoomIdGenerator
-        ? customRoomIdGenerator(roomToCreate.name, roomToCreate.options)
+        ? customRoomIdGenerator(
+            roomToCreate.name,
+            roomToCreate.options,
+            creatorOptions
+          )
         : nanoid()
       if (!existingRoomIds.includes(possibleRoomId)) {
         roomId = possibleRoomId

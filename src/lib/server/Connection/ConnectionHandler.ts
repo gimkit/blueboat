@@ -25,7 +25,7 @@ interface ConnectionHandlerOptions {
   gameValues: CustomGameValues
   onRoomMade: (room: Room) => void
   onRoomDisposed: (roomId: string) => void
-  customRoomIdGenerator?: (roomName: string, options?: any) => string
+  customRoomIdGenerator?: (roomName: string, roomOptions?: any, creatorOptions?: any) => string
 }
 
 const ConnectionHandler = (options: ConnectionHandlerOptions) => {
