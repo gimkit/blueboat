@@ -22,12 +22,16 @@ export const ProcessStarter = (
   options?: any
 ) => {
   if (cluster.isWorker) {
-    startFunction(options)
+    const processOptions = JSON.parse(process.env.blueboatGameValues || "{}")
+    startFunction(processOptions)
   }
   if (cluster.isMaster) {
     const workers = [] as cluster.Worker[]
+    const envVariables = {
+      blueboatGameValues: options ? JSON.stringify(options) : "{}")
+    }
     for (let i = 0; i < numberOfWorkers; i++) {
-      const worker = cluster.fork()
+      const worker = cluster.fork(envVariables)
       workers.push(worker)
       worker.on('message', message => {
         if (message.key) {
