@@ -28,7 +28,7 @@ export const ProcessStarter = (
   if (cluster.isMaster) {
     const workers = [] as cluster.Worker[]
     const envVariables = {
-      blueboatGameValues: options ? JSON.stringify(options) : "{}")
+      blueboatGameValues: options ? JSON.stringify(options) : "{}"
     }
     for (let i = 0; i < numberOfWorkers; i++) {
       const worker = cluster.fork(envVariables)
