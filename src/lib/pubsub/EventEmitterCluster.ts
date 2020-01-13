@@ -16,9 +16,13 @@ interface Callback {
   callback: any
 }
 
-export const ProcessStarter = (startFunction: any, numberOfWorkers: number) => {
+export const ProcessStarter = (
+  startFunction: any,
+  numberOfWorkers: number,
+  options?: any
+) => {
   if (cluster.isWorker) {
-    startFunction()
+    startFunction(options)
   }
   if (cluster.isMaster) {
     const workers = [] as cluster.Worker[]
