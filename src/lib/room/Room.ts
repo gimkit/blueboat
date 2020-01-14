@@ -152,8 +152,9 @@ class Room<State = any> {
   }
   public allowReconnection = (client: Client, seconds: number) => {
     return new Promise<boolean>(resolve => {
-      if (this.owner.id === client.id) {
+      if (this.disposing) {
         resolve(false)
+        return
       }
       this.clock.setTimeout(() => {
         const reconnected = this.clients.filter(c => c.id === client.id).length
