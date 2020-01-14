@@ -1,6 +1,10 @@
 import cors from 'cors'
 import Express from 'express'
-import { ClusterMemoryStorage, EventEmitterClusterPubsub, EventEmitterPubSub, Server } from '../index'
+import {
+  ClusterMemoryStorage,
+  EventEmitterClusterPubsub,
+  Server
+} from '../index'
 import ChatRoom from './ChatRoom'
 
 const redisOptions = {
@@ -31,4 +35,3 @@ const start = async () => {
 }
 
 EventEmitterClusterPubsub.ProcessStarter(start, 2)
-

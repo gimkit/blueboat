@@ -135,7 +135,8 @@ const ConnectionHandler = (options: ConnectionHandlerOptions) => {
     }
   )
 
-  socket.on('disconnect', () => {
+  socket.on('disconnect', (reason) => {
+    console.log({reason})
     Logger(`${socket.id} - disconnected`, LoggerTypes.io)
     pubsub.publish(PLAYER_LEFT, socket.id)
   })

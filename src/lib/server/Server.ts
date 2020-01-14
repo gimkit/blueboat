@@ -157,7 +157,8 @@ class Server {
     }
     this.io = socket({
       parser: MessagePackParser,
-      path: '/blueboat'
+      path: '/blueboat',
+      transports: ['websocket']
     })
     if (options.adapters && options.adapters.length) {
       options.adapters.forEach(adapter => this.io.adapter(adapter))
