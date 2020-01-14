@@ -67,7 +67,6 @@ const ConnectionHandler = (options: ConnectionHandlerOptions) => {
           roomFetcher,
           gameValues,
           pubsub,
-          socket,
           storage,
           availableRoomTypes,
           onRoomDisposed,
@@ -135,7 +134,7 @@ const ConnectionHandler = (options: ConnectionHandlerOptions) => {
     }
   )
 
-  socket.on('disconnect', (reason) => {
+  socket.on('disconnect', () => {
     Logger(`${socket.id} - disconnected`, LoggerTypes.io)
     pubsub.publish(PLAYER_LEFT, socket.id)
   })

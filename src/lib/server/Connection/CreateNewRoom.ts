@@ -1,5 +1,5 @@
 import nanoid from 'nanoid'
-import { Server, Socket } from 'socket.io'
+import { Server } from 'socket.io'
 import AvaiableRoomType from '../../../types/AvailableRoomType'
 import { RoomSnapshot } from '../../../types/RoomSnapshot'
 import SimpleClient from '../../../types/SimpleClient'
@@ -15,7 +15,6 @@ const CreateNewRoom = async (
   roomFetcher: RoomFetcher,
   gameValues: CustomGameValues,
   pubsub: PubSub,
-  socket: Socket,
   storage: Storage,
   availableRooms: AvaiableRoomType[],
   onRoomDisposed: (roomId: string) => void,
