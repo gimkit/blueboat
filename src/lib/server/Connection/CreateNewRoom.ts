@@ -61,7 +61,6 @@ const CreateNewRoom = async (
       storage,
       creatorOptions,
       options: roomToCreate.options,
-      ownerSocket: socket,
       roomFetcher,
       gameValues,
       initialGameValues,

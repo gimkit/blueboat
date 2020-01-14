@@ -17,7 +17,6 @@ interface RoomOptions {
   storage: Storage
   pubsub: PubSub
   owner: SimpleClient
-  ownerSocket: Socket
   creatorOptions: any
   options: {}
   onRoomDisposed: (roomId: string) => void
@@ -53,8 +52,6 @@ class Room<State = any> {
   private pubsub: PubSub
   // @ts-ignore
   private storage: Storage
-  // @ts-ignore
-  private ownerSocket: Socket
   private onRoomDisposed: (roomId: string) => void
   private roomFetcher: RoomFetcher
   private disposing: boolean = false
@@ -71,7 +68,6 @@ class Room<State = any> {
     this.pubsub = options.pubsub
     this.storage = options.storage
     this.owner = options.owner
-    this.ownerSocket = options.ownerSocket
     this.onRoomDisposed = options.onRoomDisposed
     this.roomFetcher = options.roomFetcher
     this.gameValues = options.gameValues
@@ -193,6 +189,9 @@ class Room<State = any> {
   }
 
   private clientHasJoined = (client: Client, options?: any) => {
+    if (this.owner && this.owner.id && client.id === this.owner.id) {
+      this.owner.sessionId = client.sessionId
+    }
     client.send(ServerActions.joinedRoom)
     if (this.onJoin) {
       this.onJoin(client, options)
