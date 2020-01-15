@@ -152,12 +152,27 @@ class Room<State = any> {
         resolve(false)
         return
       }
-      this.clock.setTimeout(() => {
+      const timeOut = this.clock.setTimeout(() => {
         const reconnected = this.clients.filter(c => c.id === client.id).length
           ? true
           : false
+        if (interval) {
+          interval.clear()
+        }
+
         resolve(reconnected)
       }, seconds * 1000)
+      const interval = this.clock.setInterval(() => {
+        const reconnected = this.clients.filter(c => c.id === client.id).length
+        if (reconnected) {
+          if (timeOut) {
+            timeOut.clear()
+          }
+
+          interval.clear()
+          resolve(true)
+        }
+      }, 250)
     })
   }
 

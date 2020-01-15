@@ -31,8 +31,8 @@ class ChatRoom extends Room<State> {
   }
 
   public onLeave = async (client: Client) => {
-    const reconneced = await this.allowReconnection(client, 10)
-    if (reconneced) {
+    const reconnected = await this.allowReconnection(client, 30)
+    if (reconnected) {
       return
     }
     this.addMessage(`${client.id} has left the room`, 'Botsy')
