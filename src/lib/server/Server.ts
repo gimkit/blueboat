@@ -49,6 +49,8 @@ interface ServerArguments {
   ) => string
   onDispose?: () => Promise<any>
   onError?: (code: string, reason?: any) => void
+  pingTimeout?: number
+  pingInterval?: number
 }
 
 interface ServerState {
@@ -158,7 +160,9 @@ class Server {
     this.io = socket({
       parser: MessagePackParser,
       path: '/blueboat',
-      transports: ['websocket']
+      transports: ['websocket'],
+      pingTimeout: options.pingTimeout || 5000,
+      pingInterval: options.pingInterval || 25000,
     })
     if (options.adapters && options.adapters.length) {
       options.adapters.forEach(adapter => this.io.adapter(adapter))
