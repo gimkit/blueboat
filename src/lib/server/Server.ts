@@ -3,7 +3,7 @@ import Express from 'express'
 import basicAuth from 'express-basic-auth'
 import { Server as HTTPServer } from 'http'
 import { RedisOptions } from 'ioredis'
-import socket from 'socket.io'
+import * as socket from 'socket.io'
 import MessagePackParser from 'socket.io-msgpack-parser'
 import { RedisStorage } from '../..'
 import AvaiableRoomType from '../../types/AvailableRoomType'
@@ -157,17 +157,21 @@ class Server {
       this.server.listen(port, callback)
       Logger('Server listening on port ' + port, LoggerTypes.server)
     }
-    this.io = socket({
+
+    const socketOptions: socket.ServerOptions = {
+      // @ts-ignore
       parser: MessagePackParser,
       path: '/blueboat',
       transports: ['websocket'],
       pingTimeout: options.pingTimeout || 5000,
-      pingInterval: options.pingInterval || 25000,
-    })
+      pingInterval: options.pingInterval || 25000
+    }
+
+    this.io = socket.default(socketOptions)
     if (options.adapters && options.adapters.length) {
       options.adapters.forEach(adapter => this.io.adapter(adapter))
     }
-    this.io.attach(this.server)
+    this.io.attach(this.server, socketOptions)
     this.io.on('connection', s => {
       Logger(s.id + ' connected', LoggerTypes.io)
       ConnectionHandler({
