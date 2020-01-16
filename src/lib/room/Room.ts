@@ -8,6 +8,7 @@ import CustomGameValues from '../server/CustomGameValues'
 import Emitter from '../server/Emitter'
 import RoomFetcher from '../server/RoomFetcher'
 import Storage from '../storage/Storage'
+import Callback from '../utils/Callback'
 import Client from './Client'
 import Clock from './Clock'
 
@@ -45,6 +46,11 @@ class Room<State = any> {
   public gameValues?: CustomGameValues
   public roomType: string
   public owner: SimpleClient
+
+  public listeners = {
+    onJoin: new Callback(),
+    onLeave: new Callback()
+  }
 
   // Private room Helpers and Objects
   private io: Server
@@ -152,27 +158,33 @@ class Room<State = any> {
         resolve(false)
         return
       }
+
       const timeOut = this.clock.setTimeout(() => {
         const reconnected = this.clients.filter(c => c.id === client.id).length
           ? true
           : false
-        if (interval) {
-          interval.clear()
+        if (listener) {
+          listener.clear()
         }
 
         resolve(reconnected)
       }, seconds * 1000)
-      const interval = this.clock.setInterval(() => {
-        const reconnected = this.clients.filter(c => c.id === client.id).length
+
+      const listener = this.listeners.onJoin.add((joinedClient: Client) => {
+        const reconnected = this.clients.filter(c => c.id === joinedClient.id)
+          .length
+          ? true
+          : false
+
         if (reconnected) {
           if (timeOut) {
             timeOut.clear()
           }
-
-          interval.clear()
           resolve(true)
+
+          listener.clear()
         }
-      }, 250)
+      })
     })
   }
 
@@ -209,6 +221,7 @@ class Room<State = any> {
     }
     client.send(ServerActions.joinedRoom)
     if (this.onJoin) {
+      this.listeners.onJoin.call(client, options)
       this.onJoin(client, options)
     }
   }
@@ -236,6 +249,7 @@ class Room<State = any> {
     }
     client.send(ServerActions.removedFromRoom)
     this.clients = this.clients.filter(c => c !== client)
+    this.listeners.onLeave.call(client, intentional)
     if (this.onLeave) {
       await this.onLeave(client, intentional)
     }
@@ -270,6 +284,7 @@ class Room<State = any> {
       if (action === ClientActions.joinRoom) {
         if (this.clientRequestsToJoin(client, data.options)) {
           this.addClient(client, data.options)
+
           return
         } else {
           this.io
