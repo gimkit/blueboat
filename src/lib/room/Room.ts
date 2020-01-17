@@ -28,15 +28,13 @@ interface RoomOptions {
 }
 
 class Room<State = any> {
-
-
   // Public values
 
   // @ts-ignore
   public state: State = {}
   public initialGameValues: any = {}
   public roomId: string
-  public clock = new Clock()
+  public clock = new Clock(true)
   public clients: Client[] = []
   public options = {} as any
   public creatorOptions = {} as any
