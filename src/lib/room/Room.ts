@@ -1,3 +1,4 @@
+import Clock from '@gamestdio/timer'
 import { Server } from 'socket.io'
 import SimpleClient from '../../types/SimpleClient'
 import ClientActions from '../constants/ClientActions'
@@ -10,7 +11,6 @@ import RoomFetcher from '../server/RoomFetcher'
 import Storage from '../storage/Storage'
 import Callback from '../utils/Callback'
 import Client from './Client'
-import Clock from './Clock'
 
 interface RoomOptions {
   io: Server
@@ -28,8 +28,7 @@ interface RoomOptions {
 }
 
 class Room<State = any> {
-  // tslint:disable-next-line:variable-name
-  public _internalClock = new Clock()
+
 
   // Public values
 
@@ -37,8 +36,7 @@ class Room<State = any> {
   public state: State = {}
   public initialGameValues: any = {}
   public roomId: string
-  public clock = this._internalClock.clock
-  public schedule = { at: this._internalClock.at }
+  public clock = new Clock()
   public clients: Client[] = []
   public options = {} as any
   public creatorOptions = {} as any
