@@ -201,6 +201,7 @@ class Room<State = any> {
         this.roomId,
         prejoinedClient.id,
         prejoinedClient.sessionId,
+        prejoinedClient.origin,
         this.io,
         this.removeClient
       )

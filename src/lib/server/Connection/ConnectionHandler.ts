@@ -25,7 +25,11 @@ interface ConnectionHandlerOptions {
   gameValues: CustomGameValues
   onRoomMade: (room: Room) => void
   onRoomDisposed: (roomId: string) => void
-  customRoomIdGenerator?: (roomName: string, roomOptions?: any, creatorOptions?: any) => string
+  customRoomIdGenerator?: (
+    roomName: string,
+    roomOptions?: any,
+    creatorOptions?: any
+  ) => string
 }
 
 const ConnectionHandler = (options: ConnectionHandlerOptions) => {
@@ -43,7 +47,17 @@ const ConnectionHandler = (options: ConnectionHandlerOptions) => {
   } = options
 
   const userId = socket.handshake.query.id || nanoid()
-  const client: SimpleClient = { id: userId, sessionId: socket.id }
+  const client: SimpleClient = {
+    id: userId,
+    sessionId: socket.id,
+    origin:
+      socket &&
+      socket.request &&
+      socket.request.headers &&
+      socket.request.headers.origin
+        ? socket.request.headers.origin
+        : ''
+  }
   socket.emit(ServerActions.clientIdSet, userId)
 
   socket.on(
