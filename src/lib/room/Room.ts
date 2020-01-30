@@ -98,7 +98,10 @@ class Room<State = any> {
 
   // API functions
   public onCreate?(options?: any): void
-  public canClientJoin?(client: SimpleClient, options?: any): boolean
+  public async canClientJoin?(
+    client: SimpleClient,
+    options?: any
+  ): Promise<void>
   public onJoin?(client: Client, options?: any): void
   public onMessage?(client: Client, key: string, data?: any): void
   public async onLeave?(client: Client, intentional: boolean): Promise<void>
@@ -223,17 +226,22 @@ class Room<State = any> {
     }
   }
 
-  private clientRequestsToJoin = (client: SimpleClient, options: any) => {
-    // Two clients with the same ID are not allowed to join
-    if (process.env.BLUEBOAT_NO_SAME_CLIENTS) {
-      if (this.clients.filter(c => c.id === client.id).length) {
-        return false
+  private clientRequestsToJoin = async (client: SimpleClient, options: any) => {
+    try {
+      // Two clients with the same ID are not allowed to join
+      if (process.env.BLUEBOAT_NO_SAME_CLIENTS) {
+        if (this.clients.filter(c => c.id === client.id).length) {
+          // tslint:disable-next-line:no-string-throw
+          throw 'ALREADY_IN_ROOM'
+        }
       }
+      if (this.canClientJoin) {
+        await this.canClientJoin(client, options)
+      }
+      return true
+    } catch (e) {
+      throw e
     }
-    if (this.canClientJoin) {
-      return this.canClientJoin(client, options)
-    }
-    return true
   }
 
   private removeClient = async (
@@ -279,15 +287,13 @@ class Room<State = any> {
       }
       const { action, data, client } = payload
       if (action === ClientActions.joinRoom) {
-        if (this.clientRequestsToJoin(client, data.options)) {
-          this.addClient(client, data.options)
-
-          return
-        } else {
-          this.io
-            .to(client.sessionId)
-            .emit(`${this.roomId}-error`, 'Not allowed to join room')
-        }
+        this.clientRequestsToJoin(client, data.options)
+          .then(() => {
+            this.addClient(client, data.options)
+          })
+          .catch(e =>
+            this.io.to(client.sessionId).emit(`${this.roomId}-error`, e)
+          )
       }
       if (action === ClientActions.sendMessage) {
         const roomClient = this.clients.filter(
