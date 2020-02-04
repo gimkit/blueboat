@@ -25,6 +25,7 @@ interface RoomOptions {
   gameValues: CustomGameValues
   initialGameValues: any
   roomType: string
+  onRoomCreated: (error?: any) => void
 }
 
 class Room<State = any> {
@@ -81,9 +82,22 @@ class Room<State = any> {
     if (options.creatorOptions) {
       this.creatorOptions = options.creatorOptions
     }
-    this.onRoomCreated()
+
+    const roomCreated = (error?: any) => {
+      options.onRoomCreated(error)
+      this.onRoomCreated()
+      if (error) {
+        // @ts-ignore
+        this.dispose().catch((e: any) => false)
+      }
+    }
+
     if (this.onCreate) {
       this.onCreate(options.options)
+        .then(() => roomCreated())
+        .catch(e => roomCreated(e))
+    } else {
+      roomCreated()
     }
     // Dispose room automatically in 2.5 hours
     this.clock.setTimeout(
@@ -97,7 +111,7 @@ class Room<State = any> {
   }
 
   // API functions
-  public onCreate?(options?: any): void
+  public async onCreate?(options?: any): Promise<void>
   public async canClientJoin?(
     client: SimpleClient,
     options?: any
