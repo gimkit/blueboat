@@ -2,12 +2,16 @@ import { Client, Room } from '../index'
 import State from './State'
 
 class ChatRoom extends Room<State> {
-  public onCreate() {
-    this.setState(
-      new State(
-        this.initialGameValues.initialBotMessage || 'Welcome to the chat!'
+  public async onCreate() {
+    try {
+      this.setState(
+        new State(
+          this.initialGameValues.initialBotMessage || 'Welcome to the chat!'
+        )
       )
-    )
+    } catch (e) {
+      throw e
+    }
   }
 
   public onJoin(client: Client) {
