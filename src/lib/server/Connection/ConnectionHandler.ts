@@ -56,6 +56,10 @@ const ConnectionHandler = (options: ConnectionHandlerOptions) => {
       socket.request.headers &&
       socket.request.headers.origin
         ? socket.request.headers.origin
+        : '',
+    ip:
+      socket && socket.handshake && socket.handshake.address
+        ? socket.handshake.address
         : ''
   }
   socket.emit(ServerActions.clientIdSet, userId)

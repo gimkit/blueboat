@@ -219,6 +219,7 @@ class Room<State = any> {
         prejoinedClient.id,
         prejoinedClient.sessionId,
         prejoinedClient.origin,
+        prejoinedClient.ip,
         this.io,
         this.removeClient
       )
