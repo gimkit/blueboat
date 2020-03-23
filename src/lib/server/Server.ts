@@ -51,6 +51,7 @@ interface ServerArguments {
   onError?: (code: string, reason?: any) => void
   pingTimeout?: number
   pingInterval?: number
+  transports?: string[]
 }
 
 interface ServerState {
@@ -162,7 +163,7 @@ class Server {
       // @ts-ignore
       parser: MessagePackParser,
       path: '/blueboat',
-      transports: ['websocket'],
+      transports: options.transports || ['websocket'],
       pingTimeout: options.pingTimeout || 5000,
       pingInterval: options.pingInterval || 25000
     }
