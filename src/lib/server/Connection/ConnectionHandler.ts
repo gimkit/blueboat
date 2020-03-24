@@ -1,5 +1,5 @@
 import nanoid from 'nanoid'
-import serializeError from 'serialize-error'
+import { serializeError } from 'serialize-error'
 import Socket from 'socket.io'
 import AvaiableRoomType from '../../../types/AvailableRoomType'
 import SimpleClient from '../../../types/SimpleClient'

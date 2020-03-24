@@ -64,7 +64,7 @@
     "msgpack-lite": "^0.1.26",
     "nanoid": "^2.0.1",
     "node-cache": "^4.2.0",
-    "serialize-error": "^3.0.0",
+    "serialize-error": "^6.0.0",
     "sha.js": "^2.4.11",
     "socket.io": "^2.3.0",
     "socket.io-adapter-cluster": "^1.0.1",

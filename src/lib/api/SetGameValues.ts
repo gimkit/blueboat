@@ -1,4 +1,4 @@
-import serializeError from 'serialize-error'
+import { serializeError } from 'serialize-error'
 import Server from '../server/Server'
 
 const SetGameValues = async (req: any, res: any) => {

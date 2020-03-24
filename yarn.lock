@@ -5207,10 +5207,12 @@ serialize-error@^2.1.0:
   resolved "https://registry.yarnpkg.com/serialize-error/-/serialize-error-2.1.0.tgz#50b679d5635cdf84667bdc8e59af4e5b81d5f60a"
   integrity sha1-ULZ51WNc34Rme9yOWa9OW4HV9go=
 
-serialize-error@^3.0.0:
-  version "3.0.0"
-  resolved "https://registry.yarnpkg.com/serialize-error/-/serialize-error-3.0.0.tgz#80100282b09be33c611536f50033481cb9cc87cf"
-  integrity sha512-+y3nkkG/go1Vdw+2f/+XUXM1DXX1XcxTl99FfiD/OEPUNw4uo0i6FKABfTAN5ZcgGtjTRZcEbxcE/jtXbEY19A==
+serialize-error@^6.0.0:
+  version "6.0.0"
+  resolved "https://registry.yarnpkg.com/serialize-error/-/serialize-error-6.0.0.tgz#ccfb887a1dd1c48d6d52d7863b92544331fd752b"
+  integrity sha512-3vmBkMZLQO+BR4RPHcyRGdE09XCF6cvxzk2N2qn8Er3F91cy8Qt7VvEbZBOpaL53qsBbe2cFOefU6tRY6WDelA==
+  dependencies:
+    type-fest "^0.12.0"
 
 serve-static@1.13.2:
   version "1.13.2"
@@ -5965,6 +5967,11 @@ tweetnacl@^0.14.3, tweetnacl@~0.14.0:
   version "0.14.5"
   resolved "https://registry.yarnpkg.com/tweetnacl/-/tweetnacl-0.14.5.tgz#5ae68177f192d4456269d108afa93ff8743f4f64"
   integrity sha1-WuaBd/GS1EViadEIr6k/+HQ/T2Q=
+
+type-fest@^0.12.0:
+  version "0.12.0"
+  resolved "https://registry.yarnpkg.com/type-fest/-/type-fest-0.12.0.tgz#f57a27ab81c68d136a51fd71467eff94157fa1ee"
+  integrity sha512-53RyidyjvkGpnWPMF9bQgFtWp+Sl8O2Rp13VavmJgfAP9WWG6q6TkrKU8iyJdnwnfgHI6k2hTlgqH4aSdjoTbg==
 
 type-is@~1.6.16:
   version "1.6.16"

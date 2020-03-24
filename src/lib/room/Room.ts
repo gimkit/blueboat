@@ -1,4 +1,5 @@
 import Clock from '@gamestdio/timer'
+import {serializeError} from 'serialize-error'
 import { Server } from 'socket.io'
 import SimpleClient from '../../types/SimpleClient'
 import ClientActions from '../constants/ClientActions'
@@ -307,7 +308,7 @@ class Room<State = any> {
             this.addClient(client, data.options)
           })
           .catch(e =>
-            this.io.to(client.sessionId).emit(`${this.roomId}-error`, e)
+            this.io.to(client.sessionId).emit(`${this.roomId}-error`, serializeError(e))
           )
       }
       if (action === ClientActions.sendMessage) {
