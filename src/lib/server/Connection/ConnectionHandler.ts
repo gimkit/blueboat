@@ -30,6 +30,7 @@ interface ConnectionHandlerOptions {
     roomOptions?: any,
     creatorOptions?: any
   ) => string
+  returnIp?: (socket: Socket.Socket) => string
 }
 
 const ConnectionHandler = (options: ConnectionHandlerOptions) => {
@@ -57,10 +58,7 @@ const ConnectionHandler = (options: ConnectionHandlerOptions) => {
       socket.request.headers.origin
         ? socket.request.headers.origin
         : '',
-    ip:
-      socket && socket.handshake && socket.handshake.address
-        ? socket.handshake.address
-        : ''
+    ip: socket && options.returnIp ? options.returnIp(socket) : ''
   }
   socket.emit(ServerActions.clientIdSet, userId)
 

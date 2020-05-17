@@ -1,10 +1,6 @@
 import cors from 'cors'
 import Express from 'express'
-import {
-  ClusterMemoryStorage,
-  EventEmitterClusterPubsub,
-  Server
-} from '../index'
+import { EventEmitterPubSub, MemoryStorage, Server } from '../index'
 import ChatRoom from './ChatRoom'
 
 const redisOptions = {
@@ -19,9 +15,9 @@ const start = async () => {
     app.options('*', cors())
     const server = new Server({
       app,
-      storage: ClusterMemoryStorage(),
-      pubsub: EventEmitterClusterPubsub.PubSub(),
-      adapters: [EventEmitterClusterPubsub.ClusterAdapter()],
+      storage: MemoryStorage(),
+      transports: ['polling', 'websocket'],
+      pubsub: EventEmitterPubSub(),
       redis: redisOptions,
       admins: { blueboat: 'pass' }
     })
@@ -34,4 +30,4 @@ const start = async () => {
   }
 }
 
-EventEmitterClusterPubsub.ProcessStarter(start, 2)
+start()

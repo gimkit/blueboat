@@ -52,6 +52,7 @@ interface ServerArguments {
   pingTimeout?: number
   pingInterval?: number
   transports?: string[]
+  returnIp?: (socket: socket.Socket) => string
 }
 
 interface ServerState {
@@ -185,7 +186,8 @@ class Server {
         socket: s,
         onRoomMade: this.onRoomMade,
         onRoomDisposed: this.onRoomDisposed,
-        customRoomIdGenerator: this.customRoomIdGenerator
+        customRoomIdGenerator: this.customRoomIdGenerator,
+        returnIp: options.returnIp
       })
     })
 
