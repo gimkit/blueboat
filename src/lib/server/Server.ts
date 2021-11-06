@@ -10,6 +10,7 @@ import AvaiableRoomType from '../../types/AvailableRoomType'
 import GetGameValues from '../api/GetGameValues'
 import GetRoom from '../api/GetRoom'
 import GetRooms from '../api/GetRooms'
+import SendExternalMessage from '../api/SendExternalMessage'
 import SetGameValues from '../api/SetGameValues'
 import { PLAYER_LEFT } from '../constants/PubSubListeners'
 import BUNDLED_PANEL_JS from '../panel/bundle'
@@ -216,14 +217,18 @@ class Server {
       next()
     })
     router.use(basicAuth({ users: adminUsers, challenge: true }))
+    
     // @ts-ignore
     router.get('/', (req, res) => {
       res.send(PANEL_HTML)
     })
+
     router.get('/rooms', GetRooms)
     router.get('/rooms/:room', GetRoom)
     router.get('/gameValues', GetGameValues)
     router.post('/gameValues', SetGameValues)
+    router.post('/external-message', SendExternalMessage)
+
     this.app.use(PANEL_PREFIX, router)
   }
 

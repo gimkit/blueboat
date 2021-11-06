@@ -1,9 +1,13 @@
 import Clock from '@gamestdio/timer'
-import {serializeError} from 'serialize-error'
+import { serializeError } from 'serialize-error'
 import { Server } from 'socket.io'
 import SimpleClient from '../../types/SimpleClient'
 import ClientActions from '../constants/ClientActions'
-import { PLAYER_LEFT, REQUEST_INFO } from '../constants/PubSubListeners'
+import {
+  EXTERNAL_MESSAGE,
+  PLAYER_LEFT,
+  REQUEST_INFO
+} from '../constants/PubSubListeners'
 import ServerActions from '../constants/ServerActions'
 import PubSub, { OnFunction } from '../pubsub/PubSub'
 import CustomGameValues from '../server/CustomGameValues'
@@ -124,6 +128,7 @@ class Room<State = any> {
   public afterPatch?(lastState: State): void
   public beforeDispose?(): Promise<void>
   public onDispose?(): Promise<void>
+  public onExternalMessage?(key: string, data?: any)
 
   public setState = (newState: State) => {
     this.state = newState
@@ -244,13 +249,6 @@ class Room<State = any> {
 
   private clientRequestsToJoin = async (client: SimpleClient, options: any) => {
     try {
-      // Two clients with the same ID are not allowed to join
-      if (process.env.BLUEBOAT_NO_SAME_CLIENTS) {
-        if (this.clients.filter(c => c.id === client.id).length) {
-          // tslint:disable-next-line:no-string-throw
-          throw 'ALREADY_IN_ROOM'
-        }
-      }
       if (this.canClientJoin) {
         await this.canClientJoin(client, options)
       }
@@ -298,6 +296,20 @@ class Room<State = any> {
         })
         return
       }
+
+      if (payload.action === EXTERNAL_MESSAGE) {
+        if (this.onExternalMessage) {
+          if (!payload.data) {
+            return
+          }
+          if (!payload.data.key) {
+            return
+          }
+          this.onExternalMessage(payload.data.key, payload.data.data)
+        }
+        return
+      }
+
       if (!payload.client) {
         return
       }
@@ -308,13 +320,15 @@ class Room<State = any> {
             this.addClient(client, data.options)
           })
           .catch(e =>
-            this.io.to(client.sessionId).emit(`${this.roomId}-error`, serializeError(e))
+            this.io
+              .to(client.sessionId)
+              .emit(`${this.roomId}-error`, serializeError(e))
           )
       }
       if (action === ClientActions.sendMessage) {
-        const roomClient = this.clients.filter(
+        const roomClient = this.clients.find(
           c => c.sessionId === payload.client.sessionId
-        )[0]
+        )
         if (!roomClient) {
           return
         }
@@ -325,9 +339,7 @@ class Room<State = any> {
     })
 
     this._playerPubsub = (playerSessionId: string) => {
-      const client = this.clients.filter(
-        c => c.sessionId === playerSessionId
-      )[0]
+      const client = this.clients.find(c => c.sessionId === playerSessionId)
       if (!client) {
         return
       }
