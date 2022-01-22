@@ -62,7 +62,7 @@
     "ioredis": "^4.6.2",
     "lodash": "^4.17.15",
     "msgpack-lite": "^0.1.26",
-    "nanoid": "^2.0.1",
+    "nanoid": "^3.1.31",
     "node-cache": "^4.2.0",
     "serialize-error": "^6.0.0",
     "sha.js": "^2.4.11",
